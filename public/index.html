@@ -6,316 +6,329 @@
   <title>TalentBridge | Agency Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
           colors: {
-            brand: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' }
+            brand: { 50: '#f0fdfa', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' }
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease-out forwards',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'float': 'float 6s ease-in-out infinite'
+          },
+          keyframes: {
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' }
+            }
           }
         }
       }
     }
   </script>
   <style>
-    body { font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; }
-    .card { transition: all 0.2s ease; }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.08); }
+    .hero-bg {
+      background-image: linear-gradient(135deg, rgba(15,23,42,0.75), rgba(15,118,110,0.6)), url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+    .talent-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .talent-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.15); }
+    .nav-btn { position: relative; }
+    .nav-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: #0d9488;
+      transition: all 0.3s;
+      transform: translateX(-50%);
+    }
+    .nav-btn:hover::after { width: 60%; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
 
-  <!-- Login Overlay -->
-  <div id="loginOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+  <!-- Login -->
+  <div id="loginOverlay" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-up">
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-600 text-white mb-4">
-          <i class="fas fa-bridge text-xl"></i>
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 text-white mb-4 shadow-lg">
+          <i class="fas fa-bridge text-2xl"></i>
         </div>
-        <h2 class="text-2xl font-bold tracking-tight">TalentBridge</h2>
+        <h2 class="text-3xl font-bold tracking-tight">TalentBridge</h2>
         <p class="text-slate-500 text-sm mt-1">Agency operations platform</p>
       </div>
       <form onsubmit="doLogin(event)" class="space-y-4">
-        <input id="pass" type="password" placeholder="Enter password" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" required>
-        <button class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl font-medium transition">Sign in</button>
+        <input id="pass" type="password" placeholder="Password" class="w-full border border-slate-200 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" required>
+        <button class="w-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-600 text-white py-3.5 rounded-2xl font-medium transition shadow-lg shadow-brand-600/20">Sign in</button>
       </form>
       <p class="text-xs text-center text-slate-400 mt-6">Password: talentbridge2026</p>
     </div>
   </div>
 
-  <!-- Navigation -->
-  <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+  <!-- Nav -->
+  <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
-          <i class="fas fa-bridge text-sm"></i>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center text-white shadow">
+          <i class="fas fa-bridge"></i>
         </div>
-        <span class="font-semibold text-lg tracking-tight">TalentBridge</span>
+        <span class="font-bold text-xl tracking-tight">TalentBridge</span>
       </div>
       <div class="hidden md:flex items-center gap-1 text-sm">
-        <button onclick="show('home')" class="px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-600">Home</button>
-        <button onclick="show('talent')" class="px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-600">Talent</button>
-        <button onclick="show('jobs')" class="px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-600">Jobs</button>
-        <button onclick="show('dashboard')" class="px-3 py-2 rounded-lg hover:bg-slate-100 font-medium text-slate-900">Dashboard</button>
-        <button onclick="show('post')" class="ml-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Post Job</button>
+        <button onclick="show('home')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Home</button>
+        <button onclick="show('talent')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Talent</button>
+        <button onclick="show('jobs')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Jobs</button>
+        <button onclick="show('dashboard')" class="nav-btn px-4 py-2 rounded-lg font-medium text-slate-900">Dashboard</button>
+        <button onclick="show('post')" class="ml-3 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-md">Post Job</button>
       </div>
     </div>
   </nav>
 
-  <!-- Home -->
+  <!-- Home Hero -->
   <div id="home" class="section">
-    <div class="bg-white border-b border-slate-200">
-      <div class="max-w-7xl mx-auto px-6 py-24 text-center">
-        <div class="inline-flex items-center gap-2 bg-brand-50 text-brand-700 text-xs font-medium px-3 py-1.5 rounded-full mb-6">
-          <span class="w-1.5 h-1.5 bg-brand-600 rounded-full"></span>
-          Agency Platform
+    <div class="hero-bg min-h-[70vh] flex items-center">
+      <div class="max-w-7xl mx-auto px-6 py-20 text-center text-white">
+        <div class="animate-fade-up" style="animation-delay: 0.1s">
+          <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur text-white text-xs font-medium px-4 py-1.5 rounded-full mb-6">
+            <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+            Live Agency Platform
+          </div>
+          <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">TalentBridge</h1>
+          <p class="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-light">Source top professionals. Match them to clients. Track every commission.</p>
+          <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <button onclick="show('talent')" class="bg-white text-slate-900 hover:bg-slate-100 px-8 py-4 rounded-2xl font-semibold transition shadow-xl">Browse Talent</button>
+            <button onclick="show('post')" class="bg-white/10 backdrop-blur border border-white/30 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-semibold transition">Post a Job</button>
+          </div>
         </div>
-        <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 mb-6">TalentBridge</h1>
-        <p class="text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">Source skilled professionals, match them to clients, generate invoices, and track commission in one place.</p>
-        <div class="mt-10 flex gap-3 justify-center">
-          <button onclick="show('talent')" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-medium transition">View Talent</button>
-          <button onclick="show('post')" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl font-medium transition">Post a Job</button>
+      </div>
+    </div>
+
+    <!-- Feature strip -->
+    <div class="bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-8">
+        <div class="text-center animate-fade-up" style="animation-delay: 0.2s">
+          <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-users"></i></div>
+          <h3 class="font-semibold mb-1">Talent Pool</h3>
+          <p class="text-sm text-slate-500">Vetted professionals ready to work</p>
+        </div>
+        <div class="text-center animate-fade-up" style="animation-delay: 0.3s">
+          <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-link"></i></div>
+          <h3 class="font-semibold mb-1">Smart Matching</h3>
+          <p class="text-sm text-slate-500">Skill-based pairing with clients</p>
+        </div>
+        <div class="text-center animate-fade-up" style="animation-delay: 0.4s">
+          <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-chart-line"></i></div>
+          <h3 class="font-semibold mb-1">Commission Tracking</h3>
+          <p class="text-sm text-slate-500">22% tracked automatically</p>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Talent -->
-  <div id="talent" class="section hidden max-w-7xl mx-auto px-6 py-10">
-    <div class="flex items-center justify-between mb-8">
+  <div id="talent" class="section hidden max-w-7xl mx-auto px-6 py-12">
+    <div class="flex items-center justify-between mb-10">
       <div>
-        <h2 class="text-2xl font-semibold tracking-tight">Talent Pool</h2>
-        <p class="text-sm text-slate-500 mt-1">Available professionals</p>
+        <h2 class="text-3xl font-bold tracking-tight">Talent Pool</h2>
+        <p class="text-slate-500 mt-1">Professionals ready for matching</p>
       </div>
-      <button onclick="document.getElementById('addTalent').classList.toggle('hidden')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition">+ Add Talent</button>
+      <button onclick="document.getElementById('addTalent').classList.toggle('hidden')" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-xl text-sm font-medium transition shadow-md">+ Add Talent</button>
     </div>
 
-    <form id="addTalent" class="hidden bg-white border border-slate-200 rounded-2xl p-6 mb-8 grid md:grid-cols-2 gap-4" onsubmit="addTalent(event)">
-      <input name="name" placeholder="Full name" required class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="title" placeholder="Title / Role" required class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="skills" placeholder="Skills (comma separated)" required class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="rate" type="number" placeholder="Rate ($/hr)" required class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <textarea name="bio" placeholder="Short bio" class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-brand-500" rows="3"></textarea>
-      <button class="bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-medium md:col-span-2 transition">Save Talent</button>
+    <form id="addTalent" class="hidden bg-white border border-slate-200 rounded-3xl p-6 mb-10 grid md:grid-cols-2 gap-4 shadow-sm" onsubmit="addTalent(event)">
+      <input name="name" placeholder="Full name" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="title" placeholder="Title" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="skills" placeholder="Skills (comma)" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="rate" type="number" placeholder="Rate $/hr" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <textarea name="bio" placeholder="Bio" class="border border-slate-200 rounded-xl px-4 py-3 text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-brand-500" rows="3"></textarea>
+      <button class="bg-brand-600 text-white py-3 rounded-xl text-sm font-medium md:col-span-2">Save</button>
     </form>
 
-    <div id="talentList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    <div id="talentList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
   </div>
 
   <!-- Jobs -->
-  <div id="jobs" class="section hidden max-w-7xl mx-auto px-6 py-10">
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold tracking-tight">Jobs & Matching</h2>
-      <p class="text-sm text-slate-500 mt-1">Open positions and suggested matches</p>
-    </div>
-    <div id="jobsList" class="space-y-4"></div>
+  <div id="jobs" class="section hidden max-w-7xl mx-auto px-6 py-12">
+    <h2 class="text-3xl font-bold tracking-tight mb-2">Jobs & Matching</h2>
+    <p class="text-slate-500 mb-8">Open roles and suggested talent</p>
+    <div id="jobsList" class="space-y-5"></div>
   </div>
 
-  <!-- Post Job -->
-  <div id="post" class="section hidden max-w-2xl mx-auto px-6 py-10">
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold tracking-tight">Post a Job</h2>
-      <p class="text-sm text-slate-500 mt-1">We'll suggest matching talent automatically</p>
-    </div>
-    <form onsubmit="postJob(event)" class="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
-      <input name="title" placeholder="Job title" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="skills" placeholder="Required skills (comma separated)" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+  <!-- Post -->
+  <div id="post" class="section hidden max-w-2xl mx-auto px-6 py-12">
+    <h2 class="text-3xl font-bold tracking-tight mb-2">Post a Job</h2>
+    <p class="text-slate-500 mb-8">We'll match talent automatically</p>
+    <form onsubmit="postJob(event)" class="bg-white border border-slate-200 rounded-3xl p-8 space-y-4 shadow-sm">
+      <input name="title" placeholder="Job title" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="skills" placeholder="Required skills" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       <div class="grid grid-cols-2 gap-4">
-        <input name="budget" placeholder="Budget" class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <input name="clientEmail" type="email" placeholder="Client email" class="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="budget" placeholder="Budget" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="clientEmail" type="email" placeholder="Client email" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
-      <textarea name="description" placeholder="Job description" required rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
-      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl font-medium transition">Submit Job</button>
+      <textarea name="description" placeholder="Description" required rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-xl font-medium transition">Submit Job</button>
     </form>
     <div id="jobResult" class="mt-4"></div>
   </div>
 
   <!-- Dashboard -->
-  <div id="dashboard" class="section hidden max-w-7xl mx-auto px-6 py-10">
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold tracking-tight">Dashboard</h2>
-      <p class="text-sm text-slate-500 mt-1">Agency performance overview</p>
-    </div>
-
+  <div id="dashboard" class="section hidden max-w-7xl mx-auto px-6 py-12">
+    <h2 class="text-3xl font-bold tracking-tight mb-2">Dashboard</h2>
+    <p class="text-slate-500 mb-8">Agency performance</p>
     <div id="stats" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"></div>
-
     <div class="grid lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 font-medium">Revenue</div>
+      <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b font-medium">Revenue</div>
         <div id="revenueBox" class="p-6"></div>
       </div>
-      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 font-medium">Invoices</div>
-        <div id="invoiceList" class="divide-y divide-slate-100"></div>
+      <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b font-medium">Invoices</div>
+        <div id="invoiceList" class="divide-y"></div>
       </div>
     </div>
-
-    <div class="mt-6 bg-white border border-slate-200 rounded-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 font-medium">Active Matches</div>
-      <div id="matchesList" class="divide-y divide-slate-100"></div>
+    <div class="mt-6 bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b font-medium">Active Matches</div>
+      <div id="matchesList" class="divide-y"></div>
     </div>
   </div>
 
   <script>
+    const avatars = [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80'
+    ];
+
     let token = localStorage.getItem('tb_token');
     if (token) document.getElementById('loginOverlay').classList.add('hidden');
 
     async function doLogin(e) {
       e.preventDefault();
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: document.getElementById('pass').value })
-      });
+      const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:document.getElementById('pass').value}) });
       const data = await res.json();
-      if (data.token) {
-        localStorage.setItem('tb_token', data.token);
-        document.getElementById('loginOverlay').classList.add('hidden');
-      } else alert('Incorrect password');
+      if (data.token) { localStorage.setItem('tb_token', data.token); document.getElementById('loginOverlay').classList.add('hidden'); }
+      else alert('Wrong password');
     }
 
     function show(id) {
       document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
-      if (id === 'talent') loadTalent();
-      if (id === 'jobs') loadJobs();
-      if (id === 'dashboard') loadDashboard();
+      if (id==='talent') loadTalent();
+      if (id==='jobs') loadJobs();
+      if (id==='dashboard') loadDashboard();
     }
 
     async function loadTalent() {
       const talents = await (await fetch('/api/talents')).json();
-      document.getElementById('talentList').innerHTML = talents.map(t => `
-        <div class="card bg-white border border-slate-200 rounded-2xl p-5">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-semibold">${t.name}</h3>
-              <p class="text-brand-600 text-sm mt-0.5">${t.title}</p>
-            </div>
-            <div class="text-right">
-              <div class="font-semibold text-slate-900">$${t.rate}<span class="text-xs font-normal text-slate-500">/hr</span></div>
-              <div class="text-xs mt-1 ${t.available ? 'text-emerald-600' : 'text-slate-400'}">${t.available ? 'Available' : 'Engaged'}</div>
+      document.getElementById('talentList').innerHTML = talents.map((t,i)=>`
+        <div class="talent-card bg-white border border-slate-200 rounded-3xl overflow-hidden">
+          <div class="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
+            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${t.name}">
+            <div class="absolute top-3 right-3">
+              <span class="text-xs font-medium px-2.5 py-1 rounded-full ${t.available?'bg-emerald-500 text-white':'bg-slate-500 text-white'}">${t.available?'Available':'Engaged'}</span>
             </div>
           </div>
-          <div class="flex flex-wrap gap-1.5 mt-4">${t.skills.map(s => `<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-md">${s}</span>`).join('')}</div>
-          ${t.bio ? `<p class="text-sm text-slate-600 mt-3 leading-relaxed">${t.bio}</p>` : ''}
+          <div class="p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-semibold text-lg">${t.name}</h3>
+                <p class="text-brand-600 text-sm">${t.title}</p>
+              </div>
+              <div class="font-bold text-slate-900">$${t.rate}<span class="text-xs font-normal text-slate-500">/hr</span></div>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mt-3">${t.skills.map(s=>`<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg">${s}</span>`).join('')}</div>
+            ${t.bio?`<p class="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-2">${t.bio}</p>`:''}
+          </div>
         </div>
-      `).join('') || '<p class="text-slate-500 col-span-full text-center py-12">No talent yet.</p>';
+      `).join('') || '<p class="text-slate-500 col-span-full text-center py-16">No talent yet.</p>';
     }
 
     async function addTalent(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      await fetch('/api/talents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(fd))
-      });
-      e.target.reset();
-      e.target.classList.add('hidden');
-      loadTalent();
+      e.preventDefault(); const fd=new FormData(e.target);
+      await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))});
+      e.target.reset(); e.target.classList.add('hidden'); loadTalent();
     }
 
     async function loadJobs() {
       const jobs = await (await fetch('/api/jobs')).json();
-      document.getElementById('jobsList').innerHTML = jobs.map(j => `
-        <div class="bg-white border border-slate-200 rounded-2xl p-5">
+      document.getElementById('jobsList').innerHTML = jobs.map(j=>`
+        <div class="bg-white border border-slate-200 rounded-3xl p-6">
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="font-semibold">${j.title}</h3>
-              <p class="text-sm text-slate-500 mt-0.5">${(j.skills || []).join(', ')}</p>
+              <h3 class="font-semibold text-lg">${j.title}</h3>
+              <p class="text-sm text-slate-500 mt-0.5">${(j.skills||[]).join(', ')}</p>
             </div>
-            <span class="text-xs font-medium px-2.5 py-1 rounded-full ${j.status === 'matched' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}">${j.status}</span>
+            <span class="text-xs font-medium px-3 py-1 rounded-full ${j.status==='matched'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700'}">${j.status}</span>
           </div>
           <p class="text-sm text-slate-600 mt-3">${j.description}</p>
-          ${j.suggestedMatches?.length ? `
-            <div class="mt-4 flex flex-wrap gap-2">
-              ${j.suggestedMatches.map(m => `<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-lg font-medium transition">${m.name} · $${m.rate}/hr</button>`).join('')}
-            </div>
-          ` : ''}
+          ${j.suggestedMatches?.length?`<div class="mt-4 flex flex-wrap gap-2">${j.suggestedMatches.map(m=>`<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-xl font-medium transition">${m.name} · $${m.rate}/hr</button>`).join('')}</div>`:''}
         </div>
-      `).join('') || '<p class="text-slate-500 text-center py-12">No jobs posted yet.</p>';
+      `).join('')||'<p class="text-slate-500 text-center py-16">No jobs yet.</p>';
     }
 
     async function postJob(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const job = await (await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(fd))
-      })).json();
-      document.getElementById('jobResult').innerHTML = `<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl">Job posted. ${job.suggestedMatches?.length || 0} talent suggested.</div>`;
-      e.target.reset();
-      setTimeout(() => show('jobs'), 1200);
+      e.preventDefault(); const fd=new FormData(e.target);
+      const job = await (await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))})).json();
+      document.getElementById('jobResult').innerHTML=`<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl">Posted. ${job.suggestedMatches?.length||0} matches suggested.</div>`;
+      e.target.reset(); setTimeout(()=>show('jobs'),1200);
     }
 
     async function createMatch(jobId, talentId) {
-      if (!confirm('Create match and generate invoice?')) return;
-      await fetch('/api/matches', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId, talentId, hours: 40 })
-      });
-      loadJobs();
-      alert('Match created and invoice generated.');
+      if (!confirm('Create match & invoice?')) return;
+      await fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobId,talentId,hours:40})});
+      loadJobs(); alert('Match created.');
     }
 
     async function markPaid(id) {
-      await fetch('/api/matches/pay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matchId: id })
-      });
+      await fetch('/api/matches/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchId:id})});
       loadDashboard();
     }
 
     async function loadDashboard() {
       const [stats, matches, invoices] = await Promise.all([
-        fetch('/api/stats').then(r => r.json()),
-        fetch('/api/matches').then(r => r.json()),
-        fetch('/api/invoices').then(r => r.json())
+        fetch('/api/stats').then(r=>r.json()),
+        fetch('/api/matches').then(r=>r.json()),
+        fetch('/api/invoices').then(r=>r.json())
       ]);
-
       document.getElementById('stats').innerHTML = `
-        <div class="bg-white border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500">Talent</div><div class="text-2xl font-semibold mt-1">${stats.talentCount}</div></div>
-        <div class="bg-white border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500">Open Jobs</div><div class="text-2xl font-semibold mt-1">${stats.openJobs}</div></div>
-        <div class="bg-white border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500">Matches</div><div class="text-2xl font-semibold mt-1">${stats.activeMatches}</div></div>
-        <div class="bg-white border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500">Commission</div><div class="text-2xl font-semibold mt-1 text-emerald-600">$${stats.totalCommission}</div></div>
-        <div class="bg-white border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500">Paid</div><div class="text-2xl font-semibold mt-1 text-sky-600">$${stats.paidCommission || 0}</div></div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Talent</div><div class="text-3xl font-bold mt-1">${stats.talentCount}</div></div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Open Jobs</div><div class="text-3xl font-bold mt-1">${stats.openJobs}</div></div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Matches</div><div class="text-3xl font-bold mt-1">${stats.activeMatches}</div></div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Commission</div><div class="text-3xl font-bold mt-1 text-emerald-600">$${stats.totalCommission}</div></div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Paid</div><div class="text-3xl font-bold mt-1 text-sky-600">$${stats.paidCommission||0}</div></div>
       `;
-
       document.getElementById('revenueBox').innerHTML = `
-        <div class="text-4xl font-semibold text-emerald-600">$${stats.totalCommission}</div>
-        <p class="text-sm text-slate-500 mt-1">Total 22% commission</p>
-        <div class="mt-4 pt-4 border-t border-slate-100 text-sm text-slate-600">
-          Tracked and ready for collection
-        </div>
+        <div class="text-5xl font-bold text-emerald-600">$${stats.totalCommission}</div>
+        <p class="text-sm text-slate-500 mt-2">Total 22% commission tracked</p>
       `;
-
-      document.getElementById('invoiceList').innerHTML = invoices.map(i => `
-        <div class="px-6 py-3.5 flex justify-between items-center text-sm">
-          <span class="text-slate-700">Invoice #${i.id}</span>
-          <span class="font-medium ${i.status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}">$${i.amount} · ${i.status}</span>
-        </div>
-      `).join('') || '<div class="px-6 py-8 text-center text-sm text-slate-500">No invoices yet</div>';
-
-      document.getElementById('matchesList').innerHTML = matches.map(m => `
+      document.getElementById('invoiceList').innerHTML = invoices.map(i=>`
+        <div class="px-6 py-4 flex justify-between text-sm"><span>Invoice #${i.id}</span><span class="font-medium ${i.status==='paid'?'text-emerald-600':'text-amber-600'}">$${i.amount} · ${i.status}</span></div>
+      `).join('')||'<div class="px-6 py-10 text-center text-sm text-slate-500">No invoices</div>';
+      document.getElementById('matchesList').innerHTML = matches.map(m=>`
         <div class="px-6 py-4 flex justify-between items-center">
-          <div>
-            <div class="font-medium text-sm">Job #${m.jobId} ↔ Talent #${m.talentId}</div>
-            <div class="text-xs text-slate-500 mt-0.5">Client $${m.clientRate}/hr → Talent $${m.talentRate}/hr</div>
-          </div>
-          <div class="text-right">
-            <div class="font-semibold text-emerald-600 text-sm">$${(m.clientRate * m.hours * m.commissionRate).toFixed(0)}</div>
-            ${m.paid
-              ? '<span class="text-xs text-emerald-700">Paid</span>'
-              : `<button onclick="markPaid(${m.id})" class="mt-1 text-xs bg-brand-600 hover:bg-brand-700 text-white px-3 py-1 rounded-lg transition">Mark Paid</button>`
-            }
-          </div>
+          <div><div class="font-medium text-sm">Job #${m.jobId} ↔ Talent #${m.talentId}</div><div class="text-xs text-slate-500">$${m.clientRate}/hr → $${m.talentRate}/hr</div></div>
+          <div class="text-right"><div class="font-semibold text-emerald-600">$${(m.clientRate*m.hours*m.commissionRate).toFixed(0)}</div>${m.paid?'<span class="text-xs text-emerald-700">Paid</span>':`<button onclick="markPaid(${m.id})" class="text-xs bg-brand-600 text-white px-3 py-1 rounded-lg mt-1">Mark Paid</button>`}</div>
         </div>
-      `).join('') || '<div class="px-6 py-8 text-center text-sm text-slate-500">No matches yet</div>';
+      `).join('')||'<div class="px-6 py-10 text-center text-sm text-slate-500">No matches</div>';
     }
 
     show('home');
