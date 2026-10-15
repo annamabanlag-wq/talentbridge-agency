@@ -8,61 +8,60 @@ const PAYPAL_EMAIL = process.env.PAYPAL_EMAIL || 'rachelrob@live.com';
 const COMMISSION_RATE = 0.22;
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS || 'talentbridge2026';
-const DATA_FILE = path.join(__dirname, 'data.json');
-const BACKUP_FILE = path.join(__dirname, 'data.backup.json');
+const DATABASE_URL = process.env.DATABASE_URL;
 
-function loadData() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf8');
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.talents)) return parsed;
-    }
-  } catch (e) {
-    console.error('Data load failed, trying backup:', e.message);
+let sql;
+let dbReady = false;
+
+async function initDB() {
+  if (!DATABASE_URL) {
+    console.log('No DATABASE_URL — running in memory only');
+    return;
   }
   try {
-    if (fs.existsSync(BACKUP_FILE)) {
-      const raw = fs.readFileSync(BACKUP_FILE, 'utf8');
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.talents)) {
-        console.log('Recovered from backup');
-        return parsed;
+    const { neon } = require('@neondatabase/serverless');
+    sql = neon(DATABASE_URL);
+    await sql`CREATE TABLE IF NOT EXISTS talents (
+      id SERIAL PRIMARY KEY,
+      name TEXT, title TEXT, skills TEXT, rate NUMERIC, rating NUMERIC, available BOOLEAN, bio TEXT
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS jobs (
+      id SERIAL PRIMARY KEY,
+      title TEXT, skills TEXT, budget TEXT, description TEXT, client_email TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS matches (
+      id SERIAL PRIMARY KEY,
+      job_id INT, talent_id INT, status TEXT, paid BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW(),
+      commission_rate NUMERIC, talent_rate NUMERIC, client_rate NUMERIC, hours NUMERIC
+    )`;
+    await sql`CREATE TABLE IF NOT EXISTS invoices (
+      id SERIAL PRIMARY KEY,
+      match_id INT, amount NUMERIC, paypal TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    const count = await sql`SELECT COUNT(*) FROM talents`;
+    if (Number(count[0].count) === 0) {
+      const seed = [
+        ["Alex Rivera", "Senior Full-Stack Developer", "React,Node.js,TypeScript,AWS", 95, 4.9, true, "10+ years building scalable web applications."],
+        ["Priya Sharma", "UI/UX Designer", "Figma,Design Systems,User Research", 75, 4.8, true, "Specializes in product design and design systems."],
+        ["Marcus Chen", "Data Scientist", "Python,Machine Learning,SQL", 110, 5.0, true, "ML engineer with production experience."],
+        ["Elena Volkov", "Digital Marketing Strategist", "SEO,Paid Ads,Analytics", 70, 4.7, true, "Growth marketing for SaaS and e-commerce."],
+        ["James Okonkwo", "DevOps Engineer", "Kubernetes,CI/CD,Terraform", 105, 4.9, true, "Infrastructure and deployment specialist."],
+        ["Sofia Alvarez", "Product Manager", "Roadmapping,Agile,Analytics", 90, 4.8, true, "Technical PM with startup and enterprise experience."]
+      ];
+      for (const t of seed) {
+        await sql`INSERT INTO talents (name, title, skills, rate, rating, available, bio) VALUES (${t[0]}, ${t[1]}, ${t[2]}, ${t[3]}, ${t[4]}, ${t[5]}, ${t[6]})`;
       }
+      console.log('Database seeded');
     }
+    dbReady = true;
+    console.log('Database connected');
   } catch (e) {
-    console.error('Backup load failed:', e.message);
-  }
-  return {
-    talents: [
-      { id: 1, name: "Alex Rivera", title: "Senior Full-Stack Developer", skills: ["React", "Node.js", "TypeScript", "AWS"], rate: 95, rating: 4.9, available: true, bio: "10+ years building scalable web applications." },
-      { id: 2, name: "Priya Sharma", title: "UI/UX Designer", skills: ["Figma", "Design Systems", "User Research"], rate: 75, rating: 4.8, available: true, bio: "Specializes in product design and design systems." },
-      { id: 3, name: "Marcus Chen", title: "Data Scientist", skills: ["Python", "Machine Learning", "SQL"], rate: 110, rating: 5.0, available: true, bio: "ML engineer with production experience." },
-      { id: 4, name: "Elena Volkov", title: "Digital Marketing Strategist", skills: ["SEO", "Paid Ads", "Analytics"], rate: 70, rating: 4.7, available: true, bio: "Growth marketing for SaaS and e-commerce." },
-      { id: 5, name: "James Okonkwo", title: "DevOps Engineer", skills: ["Kubernetes", "CI/CD", "Terraform"], rate: 105, rating: 4.9, available: true, bio: "Infrastructure and deployment specialist." },
-      { id: 6, name: "Sofia Alvarez", title: "Product Manager", skills: ["Roadmapping", "Agile", "Analytics"], rate: 90, rating: 4.8, available: true, bio: "Technical PM with startup and enterprise experience." }
-    ],
-    jobs: [], matches: [], payments: [], invoices: [], nextId: 7
-  };
-}
-
-function saveData(d) {
-  try {
-    // On serverless (Vercel) filesystem may be read-only — skip safely so the app stays up
-    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-      console.log('Serverless: data kept in memory');
-      return;
-    }
-    const tmp = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(d, null, 2));
-    if (fs.existsSync(DATA_FILE)) fs.copyFileSync(DATA_FILE, BACKUP_FILE);
-    fs.renameSync(tmp, DATA_FILE);
-  } catch (e) {
-    console.error('Save failed (continuing in memory):', e.message);
+    console.error('DB init failed, falling back to memory:', e.message);
+    dbReady = false;
   }
 }
 
-let data = loadData();
+let mem = { talents: [], jobs: [], matches: [], invoices: [], nextId: 1 };
 const sessions = new Map();
 const startTime = Date.now();
 
@@ -70,29 +69,33 @@ function sendJSON(res, status, obj) {
   try {
     res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
     res.end(JSON.stringify(obj));
-  } catch (e) {
-    console.error('sendJSON error:', e.message);
-  }
+  } catch {}
 }
 
 function parseBody(req) {
   return new Promise(resolve => {
     let body = '';
-    let settled = false;
-    const timeout = setTimeout(() => {
-      if (!settled) { settled = true; resolve({}); }
-    }, 10000);
-    req.on('data', c => { body += c; if (body.length > 1e6) req.destroy(); });
+    req.on('data', c => body += c);
     req.on('end', () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
       try { resolve(JSON.parse(body || '{}')); } catch { resolve({}); }
     });
-    req.on('error', () => {
-      if (!settled) { settled = true; clearTimeout(timeout); resolve({}); }
-    });
   });
+}
+
+async function getTalents() {
+  if (dbReady) {
+    const rows = await sql`SELECT * FROM talents ORDER BY id`;
+    return rows.map(r => ({ ...r, skills: (r.skills || '').split(',').filter(Boolean) }));
+  }
+  return mem.talents;
+}
+
+async function getJobs() {
+  if (dbReady) {
+    const rows = await sql`SELECT * FROM jobs ORDER BY id DESC`;
+    return rows.map(r => ({ ...r, skills: (r.skills || '').split(',').filter(Boolean), suggestedMatches: [] }));
+  }
+  return mem.jobs;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -101,177 +104,141 @@ const server = http.createServer(async (req, res) => {
     const pathname = parsed.pathname || '/';
 
     if (req.method === 'OPTIONS') {
-      res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
+      res.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
       return res.end();
     }
 
     if (pathname === '/health' || pathname === '/api/health') {
-      return sendJSON(res, 200, {
-        status: 'ok',
-        uptime: Math.floor((Date.now() - startTime) / 1000),
-        talents: data.talents.length,
-        jobs: data.jobs.length,
-        matches: data.matches.length,
-        paypal: PAYPAL_EMAIL
-      });
+      return sendJSON(res, 200, { status: 'ok', db: dbReady, uptime: Math.floor((Date.now()-startTime)/1000), paypal: PAYPAL_EMAIL });
     }
 
     if (pathname === '/api/login' && req.method === 'POST') {
       const body = await parseBody(req);
       if (body.password === ADMIN_PASS) {
         const token = crypto.randomBytes(16).toString('hex');
-        sessions.set(token, { role: 'admin', created: Date.now() });
-        return sendJSON(res, 200, { token, role: 'admin' });
+        sessions.set(token, Date.now());
+        return sendJSON(res, 200, { token });
       }
-      return sendJSON(res, 401, { error: 'Invalid password' });
+      return sendJSON(res, 401, { error: 'Invalid' });
     }
 
-    if (pathname === '/api/talents' && req.method === 'GET') return sendJSON(res, 200, data.talents);
-    if (pathname === '/api/jobs' && req.method === 'GET') return sendJSON(res, 200, data.jobs);
-    if (pathname === '/api/matches' && req.method === 'GET') return sendJSON(res, 200, data.matches);
-    if (pathname === '/api/paypal' && req.method === 'GET') return sendJSON(res, 200, { email: PAYPAL_EMAIL, rate: COMMISSION_RATE });
-    if (pathname === '/api/invoices' && req.method === 'GET') return sendJSON(res, 200, data.invoices || []);
+    if (pathname === '/api/talents' && req.method === 'GET') {
+      return sendJSON(res, 200, await getTalents());
+    }
 
     if (pathname === '/api/talents' && req.method === 'POST') {
       const body = await parseBody(req);
-      if (!body.name || !body.title) return sendJSON(res, 400, { error: 'Name and title required' });
-      const talent = {
-        id: data.nextId++,
-        name: String(body.name).slice(0, 100),
-        title: String(body.title).slice(0, 100),
-        skills: (body.skills || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 15),
-        rate: Math.max(0, Number(body.rate) || 0),
-        rating: 0,
-        available: true,
-        bio: String(body.bio || '').slice(0, 500)
-      };
-      data.talents.push(talent);
-      saveData(data);
-      return sendJSON(res, 201, talent);
+      const skills = (body.skills || '').split(',').map(s=>s.trim()).filter(Boolean).join(',');
+      if (dbReady) {
+        const rows = await sql`INSERT INTO talents (name, title, skills, rate, rating, available, bio) VALUES (${body.name}, ${body.title}, ${skills}, ${Number(body.rate)||0}, 0, true, ${body.bio||''}) RETURNING *`;
+        return sendJSON(res, 201, { ...rows[0], skills: skills.split(',') });
+      }
+      const t = { id: mem.nextId++, name: body.name, title: body.title, skills: skills.split(','), rate: Number(body.rate)||0, available: true, bio: body.bio||'' };
+      mem.talents.push(t);
+      return sendJSON(res, 201, t);
+    }
+
+    if (pathname === '/api/jobs' && req.method === 'GET') {
+      const jobs = await getJobs();
+      const talents = await getTalents();
+      for (const j of jobs) {
+        j.suggestedMatches = talents.filter(t => t.available && (t.skills||[]).some(s => (j.skills||[]).includes(s))).map(t => ({ id: t.id, name: t.name, title: t.title, rate: t.rate }));
+      }
+      return sendJSON(res, 200, jobs);
     }
 
     if (pathname === '/api/jobs' && req.method === 'POST') {
       const body = await parseBody(req);
-      if (!body.title) return sendJSON(res, 400, { error: 'Title required' });
-      const job = {
-        id: data.nextId++,
-        title: String(body.title).slice(0, 150),
-        skills: (body.skills || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 15),
-        budget: body.budget || '',
-        description: String(body.description || '').slice(0, 1000),
-        clientEmail: body.clientEmail || '',
-        status: 'open',
-        createdAt: new Date().toISOString()
-      };
-      job.suggestedMatches = data.talents
-        .filter(t => t.available && t.skills.some(s => job.skills.includes(s)))
-        .map(m => ({ id: m.id, name: m.name, title: m.title, rate: m.rate }));
-      data.jobs.push(job);
-      saveData(data);
+      const skills = (body.skills || '').split(',').map(s=>s.trim()).filter(Boolean).join(',');
+      if (dbReady) {
+        const rows = await sql`INSERT INTO jobs (title, skills, budget, description, client_email, status) VALUES (${body.title}, ${skills}, ${body.budget||''}, ${body.description||''}, ${body.clientEmail||''}, 'open') RETURNING *`;
+        const job = { ...rows[0], skills: skills.split(',') };
+        const talents = await getTalents();
+        job.suggestedMatches = talents.filter(t => t.available && (t.skills||[]).some(s => job.skills.includes(s))).map(t => ({ id: t.id, name: t.name, title: t.title, rate: t.rate }));
+        return sendJSON(res, 201, job);
+      }
+      const job = { id: mem.nextId++, title: body.title, skills: skills.split(','), budget: body.budget, description: body.description, status: 'open', suggestedMatches: [] };
+      mem.jobs.push(job);
       return sendJSON(res, 201, job);
     }
 
     if (pathname === '/api/matches' && req.method === 'POST') {
       const body = await parseBody(req);
-      const talent = data.talents.find(t => t.id === Number(body.talentId));
+      const talents = await getTalents();
+      const talent = talents.find(t => t.id === Number(body.talentId));
       if (!talent) return sendJSON(res, 400, { error: 'Talent not found' });
       const clientRate = Math.round(talent.rate / (1 - COMMISSION_RATE));
-      const match = {
-        id: data.nextId++,
-        jobId: Number(body.jobId),
-        talentId: talent.id,
-        status: 'active',
-        paid: false,
-        createdAt: new Date().toISOString(),
-        commissionRate: COMMISSION_RATE,
-        talentRate: talent.rate,
-        clientRate,
-        hours: Math.max(1, Number(body.hours) || 40)
-      };
-      data.matches.push(match);
-      talent.available = false;
-      const job = data.jobs.find(j => j.id === match.jobId);
-      if (job) job.status = 'matched';
-      const invoice = {
-        id: data.nextId++,
-        matchId: match.id,
-        amount: Math.round(match.clientRate * match.hours * match.commissionRate),
-        paypal: PAYPAL_EMAIL,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      if (!data.invoices) data.invoices = [];
-      data.invoices.push(invoice);
-      saveData(data);
-      return sendJSON(res, 201, { match, invoice });
+      const hours = Number(body.hours) || 40;
+      if (dbReady) {
+        await sql`UPDATE talents SET available = false WHERE id = ${talent.id}`;
+        await sql`UPDATE jobs SET status = 'matched' WHERE id = ${Number(body.jobId)}`;
+        const mrows = await sql`INSERT INTO matches (job_id, talent_id, status, commission_rate, talent_rate, client_rate, hours) VALUES (${Number(body.jobId)}, ${talent.id}, 'active', ${COMMISSION_RATE}, ${talent.rate}, ${clientRate}, ${hours}) RETURNING *`;
+        const amount = Math.round(clientRate * hours * COMMISSION_RATE);
+        await sql`INSERT INTO invoices (match_id, amount, paypal, status) VALUES (${mrows[0].id}, ${amount}, ${PAYPAL_EMAIL}, 'pending')`;
+        return sendJSON(res, 201, mrows[0]);
+      }
+      return sendJSON(res, 201, { id: mem.nextId++, jobId: body.jobId, talentId: talent.id, clientRate, talentRate: talent.rate, hours });
+    }
+
+    if (pathname === '/api/matches' && req.method === 'GET') {
+      if (dbReady) {
+        const rows = await sql`SELECT * FROM matches ORDER BY id DESC`;
+        return sendJSON(res, 200, rows.map(r => ({ ...r, jobId: r.job_id, talentId: r.talent_id, clientRate: r.client_rate, talentRate: r.talent_rate, commissionRate: r.commission_rate })));
+      }
+      return sendJSON(res, 200, mem.matches);
     }
 
     if (pathname === '/api/matches/pay' && req.method === 'POST') {
       const body = await parseBody(req);
-      const match = data.matches.find(m => m.id === Number(body.matchId));
-      if (!match) return sendJSON(res, 404, { error: 'Match not found' });
-      match.paid = true;
-      match.paidAt = new Date().toISOString();
-      const inv = (data.invoices || []).find(i => i.matchId === match.id);
-      if (inv) inv.status = 'paid';
-      const payment = {
-        id: data.nextId++,
-        matchId: match.id,
-        amount: Math.round(match.clientRate * match.hours * match.commissionRate),
-        paypal: PAYPAL_EMAIL,
-        status: 'recorded',
-        createdAt: new Date().toISOString()
-      };
-      if (!data.payments) data.payments = [];
-      data.payments.push(payment);
-      saveData(data);
-      return sendJSON(res, 200, { match, payment });
+      if (dbReady) {
+        await sql`UPDATE matches SET paid = true WHERE id = ${Number(body.matchId)}`;
+        await sql`UPDATE invoices SET status = 'paid' WHERE match_id = ${Number(body.matchId)}`;
+      }
+      return sendJSON(res, 200, { ok: true });
+    }
+
+    if (pathname === '/api/invoices' && req.method === 'GET') {
+      if (dbReady) {
+        const rows = await sql`SELECT * FROM invoices ORDER BY id DESC`;
+        return sendJSON(res, 200, rows);
+      }
+      return sendJSON(res, 200, []);
     }
 
     if (pathname === '/api/stats' && req.method === 'GET') {
+      const talents = await getTalents();
+      const jobs = await getJobs();
+      let matches = [];
+      if (dbReady) {
+        matches = await sql`SELECT * FROM matches`;
+      }
       let total = 0;
-      data.matches.forEach(m => { total += (m.clientRate || 0) * (m.hours || 40) * m.commissionRate; });
+      matches.forEach(m => { total += (m.client_rate || m.clientRate || 0) * (m.hours || 40) * COMMISSION_RATE; });
       return sendJSON(res, 200, {
-        talentCount: data.talents.length,
-        openJobs: data.jobs.filter(j => j.status === 'open').length,
-        activeMatches: data.matches.filter(m => m.status === 'active').length,
-        totalMatches: data.matches.length,
+        talentCount: talents.length,
+        openJobs: jobs.filter(j => j.status === 'open').length,
+        activeMatches: matches.filter(m => m.status === 'active').length,
         totalCommission: Math.round(total),
-        paidCommission: (data.payments || []).reduce((s, p) => s + (p.amount || 0), 0),
         paypal: PAYPAL_EMAIL,
-        invoices: (data.invoices || []).length,
-        uptime: Math.floor((Date.now() - startTime) / 1000)
+        db: dbReady
       });
     }
 
     if (pathname === '/' || pathname === '/index.html') {
-      const htmlPath = path.join(__dirname, 'public', 'index.html');
-      if (fs.existsSync(htmlPath)) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(fs.readFileSync(htmlPath, 'utf8'));
-      }
+      const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(html);
     }
 
     sendJSON(res, 404, { error: 'Not found' });
   } catch (err) {
-    console.error('Request error:', err.message);
-    try { sendJSON(res, 500, { error: 'Internal error' }); } catch {}
+    console.error(err);
+    sendJSON(res, 500, { error: 'Internal error' });
   }
 });
 
-server.on('error', (err) => {
-  console.error('Server error:', err.message);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err.message);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled rejection:', reason);
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`TalentBridge stable at http://0.0.0.0:${PORT}`);
-  console.log(`Health: /health`);
-  console.log(`Revenue: ${PAYPAL_EMAIL}`);
+initDB().then(() => {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`TalentBridge running on ${PORT} | DB: ${dbReady ? 'connected' : 'memory'}`);
+  });
 });
