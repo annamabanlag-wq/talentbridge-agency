@@ -48,12 +48,17 @@ function loadData() {
 
 function saveData(d) {
   try {
+    // On serverless (Vercel) filesystem may be read-only — skip safely so the app stays up
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      console.log('Serverless: data kept in memory');
+      return;
+    }
     const tmp = DATA_FILE + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(d, null, 2));
     if (fs.existsSync(DATA_FILE)) fs.copyFileSync(DATA_FILE, BACKUP_FILE);
     fs.renameSync(tmp, DATA_FILE);
   } catch (e) {
-    console.error('Save failed:', e.message);
+    console.error('Save failed (continuing in memory):', e.message);
   }
 }
 
