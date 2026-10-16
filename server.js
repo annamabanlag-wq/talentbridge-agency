@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const PAYPAL_EMAIL = process.env.PAYPAL_EMAIL || 'rachelrob@live.com';
 const COMMISSION_RATE = 0.22;
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASS = process.env.ADMIN_PASS || 'talentbridge2026';
+const ADMIN_PASS = process.env.ADMIN_PASS;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 let sql;
@@ -63,7 +63,21 @@ async function initDB() {
 
 let mem = { talents: [], jobs: [], matches: [], invoices: [], nextId: 1 };
 const sessions = new Map();
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const startTime = Date.now();
+
+function requireAdmin(req, res) {
+  const header = req.headers.authorization || '';
+  const match = header.match(/^Bearer ([a-f0-9]{32})$/i);
+  if (!match) { sendJSON(res, 401, { error: 'Authentication required' }); return false; }
+  const createdAt = sessions.get(match[1]);
+  if (!createdAt || Date.now() - createdAt > SESSION_TTL_MS) {
+    sessions.delete(match[1]);
+    sendJSON(res, 401, { error: 'Session expired; please sign in again' });
+    return false;
+  }
+  return true;
+}
 
 function sendJSON(res, status, obj) {
   try {
@@ -109,17 +123,18 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/health' || pathname === '/api/health') {
-      return sendJSON(res, 200, { status: 'ok', db: dbReady, uptime: Math.floor((Date.now()-startTime)/1000), paypal: PAYPAL_EMAIL });
+      return sendJSON(res, 200, { status: 'ok', db: dbReady, uptime: Math.floor((Date.now()-startTime)/1000) });
     }
 
     if (pathname === '/api/login' && req.method === 'POST') {
       const body = await parseBody(req);
-      if (body.password === ADMIN_PASS) {
+      if (!ADMIN_PASS) return sendJSON(res, 503, { error: 'Admin login is not configured. Set ADMIN_PASS in deployment environment variables.' });
+      if (typeof body.password === 'string' && body.password === ADMIN_PASS) {
         const token = crypto.randomBytes(16).toString('hex');
         sessions.set(token, Date.now());
         return sendJSON(res, 200, { token });
       }
-      return sendJSON(res, 401, { error: 'Invalid' });
+      return sendJSON(res, 401, { error: 'Invalid credentials' });
     }
 
     if (pathname === '/api/talents' && req.method === 'GET') {
@@ -127,6 +142,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/talents' && req.method === 'POST') {
+      if (!requireAdmin(req, res)) return;
       const body = await parseBody(req);
       const skills = (body.skills || '').split(',').map(s=>s.trim()).filter(Boolean).join(',');
       if (dbReady) {
@@ -163,6 +179,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/matches' && req.method === 'POST') {
+      if (!requireAdmin(req, res)) return;
       const body = await parseBody(req);
       const talents = await getTalents();
       const talent = talents.find(t => t.id === Number(body.talentId));
@@ -181,6 +198,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/matches' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
       if (dbReady) {
         const rows = await sql`SELECT * FROM matches ORDER BY id DESC`;
         return sendJSON(res, 200, rows.map(r => ({ ...r, jobId: r.job_id, talentId: r.talent_id, clientRate: r.client_rate, talentRate: r.talent_rate, commissionRate: r.commission_rate })));
@@ -189,15 +207,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/matches/pay' && req.method === 'POST') {
+      if (!requireAdmin(req, res)) return;
       const body = await parseBody(req);
-      if (dbReady) {
-        await sql`UPDATE matches SET paid = true WHERE id = ${Number(body.matchId)}`;
-        await sql`UPDATE invoices SET status = 'paid' WHERE match_id = ${Number(body.matchId)}`;
-      }
+      const matchId = Number(body.matchId);
+      if (!Number.isInteger(matchId) || matchId <= 0) return sendJSON(res, 400, { error: 'Valid matchId required' });
+      if (!dbReady) return sendJSON(res, 503, { error: 'Persistent database unavailable; payment status was not changed' });
+      const rows = await sql`SELECT id FROM matches WHERE id = ${matchId}`;
+      if (!rows.length) return sendJSON(res, 404, { error: 'Match not found' });
+      await sql`UPDATE matches SET paid = true WHERE id = ${matchId}`;
+      await sql`UPDATE invoices SET status = 'paid' WHERE match_id = ${matchId}`;
       return sendJSON(res, 200, { ok: true });
     }
 
     if (pathname === '/api/invoices' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
       if (dbReady) {
         const rows = await sql`SELECT * FROM invoices ORDER BY id DESC`;
         return sendJSON(res, 200, rows);
@@ -206,6 +229,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/stats' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
       const talents = await getTalents();
       const jobs = await getJobs();
       let matches = [];
@@ -219,7 +243,6 @@ const server = http.createServer(async (req, res) => {
         openJobs: jobs.filter(j => j.status === 'open').length,
         activeMatches: matches.filter(m => m.status === 'active').length,
         totalCommission: Math.round(total),
-        paypal: PAYPAL_EMAIL,
         db: dbReady
       });
     }
