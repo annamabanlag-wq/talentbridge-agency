@@ -9,6 +9,67 @@ const COMMISSION_RATE = 0.22;
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS;
 const DATABASE_URL = process.env.DATABASE_URL;
+const MANPOWER_ALERT_EMAIL = process.env.MANPOWER_ALERT_EMAIL || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const RESEND_FROM = process.env.RESEND_FROM || '';
+
+function escapeEmailHtml(value) {
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function notifyManpowerRequest(lead) {
+  if (!MANPOWER_ALERT_EMAIL || !RESEND_API_KEY || !RESEND_FROM) {
+    console.warn('Manpower alert email skipped: configure MANPOWER_ALERT_EMAIL, RESEND_API_KEY and RESEND_FROM.');
+    return false;
+  }
+
+  const subject = 'New manpower request #' + lead.id + ' — ' + lead.companyName;
+  const text = [
+    'A new manpower request was submitted on TalentBridge.',
+    '',
+    'Request ID: ' + lead.id,
+    'Company: ' + lead.companyName,
+    'Contact person: ' + lead.contactName,
+    'Business email: ' + lead.clientEmail,
+    'Phone: ' + lead.contactPhone,
+    'Work location: ' + lead.location,
+    'Role: ' + lead.title,
+    'Workers needed: ' + lead.workersNeeded,
+    'Required skills: ' + lead.skills.join(', '),
+    'Budget: ' + (lead.budget || 'Not specified'),
+    '',
+    'Description:',
+    lead.description,
+    '',
+    'Sign in to the TalentBridge admin dashboard to review the full lead.'
+  ].join('\n');
+  const html = '<h2>New manpower request</h2><p>A new request was submitted on TalentBridge.</p><table>' +
+    [['Request ID', lead.id], ['Company', lead.companyName], ['Contact person', lead.contactName],
+     ['Business email', lead.clientEmail], ['Phone', lead.contactPhone], ['Work location', lead.location],
+     ['Role', lead.title], ['Workers needed', lead.workersNeeded], ['Required skills', lead.skills.join(', ')],
+     ['Budget', lead.budget || 'Not specified']].map(([label, value]) =>
+       '<tr><th align="left" style="padding:6px">' + escapeEmailHtml(label) + '</th><td style="padding:6px">' + escapeEmailHtml(value) + '</td></tr>'
+     ).join('') + '</table><h3>Description</h3><p>' + escapeEmailHtml(lead.description).replace(/\n/g, '<br>') +
+     '</p><p>Sign in to the TalentBridge admin dashboard to review the full lead.</p>';
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: RESEND_FROM, to: [MANPOWER_ALERT_EMAIL], subject, text, html }),
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) {
+      console.error('Manpower alert email provider rejected the request; status:', response.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Manpower alert email delivery request failed:', error?.name || 'UnknownError');
+    return false;
+  }
+}
 
 let sql;
 let dbReady = false;
@@ -259,6 +320,7 @@ const server = http.createServer(async (req, res) => {
         const job = { id: rows[0].id, title: rows[0].title, skills: skills.split(','), budget: rows[0].budget, description: rows[0].description, status: rows[0].status, createdAt: rows[0].created_at };
         const talents = await getTalents();
         job.suggestedMatches = talents.filter(t => t.available && (t.skills||[]).some(s => job.skills.includes(s))).map(t => ({ id: t.id, name: t.name, title: t.title, rate: t.rate }));
+        await notifyManpowerRequest({ id: job.id, companyName, contactName, clientEmail, contactPhone, location, title, workersNeeded, skills: skills.split(','), budget, description });
         return sendJSON(res, 201, job);
       }
       const job = { id: mem.nextId++, title, skills: skills.split(','), budget, description, status: 'open', suggestedMatches: [] };
