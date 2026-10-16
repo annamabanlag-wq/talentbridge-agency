@@ -27,8 +27,15 @@ async function initDB() {
     )`;
     await sql`CREATE TABLE IF NOT EXISTS jobs (
       id SERIAL PRIMARY KEY,
-      title TEXT, skills TEXT, budget TEXT, description TEXT, client_email TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+      title TEXT, skills TEXT, budget TEXT, description TEXT,
+      company_name TEXT, contact_name TEXT, contact_phone TEXT, workers_needed INT, location TEXT,
+      client_email TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS company_name TEXT`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS contact_name TEXT`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS contact_phone TEXT`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS workers_needed INT`;
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS location TEXT`;
 
     // Remove only the exact six fictional seed profiles shipped by the old demo version.
     // Real candidate records that do not match all identifying fields are untouched.
@@ -156,6 +163,8 @@ async function getJobs() {
     return rows.map(r => ({
       id: r.id, title: r.title, skills: (r.skills || '').split(',').filter(Boolean),
       budget: r.budget, description: r.description, status: r.status, createdAt: r.created_at,
+      companyName: r.company_name || '', contactName: r.contact_name || '', contactPhone: r.contact_phone || '',
+      workersNeeded: r.workers_needed || 0, location: r.location || '', clientEmail: r.client_email || '',
       suggestedMatches: []
     }));
   }
@@ -214,6 +223,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/jobs' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
       const jobs = await getJobs();
       const talents = await getTalents();
       for (const j of jobs) {
@@ -230,13 +240,22 @@ const server = http.createServer(async (req, res) => {
       const rawSkills = typeof body.skills === 'string' ? body.skills.trim() : '';
       const budget = typeof body.budget === 'string' ? body.budget.trim() : '';
       const description = typeof body.description === 'string' ? body.description.trim() : '';
+      const companyName = typeof body.companyName === 'string' ? body.companyName.trim() : '';
+      const contactName = typeof body.contactName === 'string' ? body.contactName.trim() : '';
+      const contactPhone = typeof body.contactPhone === 'string' ? body.contactPhone.trim() : '';
+      const location = typeof body.location === 'string' ? body.location.trim() : '';
+      const workersNeeded = Number(body.workersNeeded);
       const clientEmail = typeof body.clientEmail === 'string' ? body.clientEmail.trim() : '';
-      if (!title || title.length > 150 || !rawSkills || rawSkills.length > 500 || !description || description.length > 3000 || budget.length > 100 || clientEmail.length > 254 || (clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail))) {
-        return sendJSON(res, 400, { error: 'Invalid job request. Check title, skills, description, budget and contact email.' });
+      if (!title || title.length > 150 || !rawSkills || rawSkills.length > 500 || !description || description.length > 3000 || budget.length > 100 ||
+          !companyName || companyName.length > 180 || !contactName || contactName.length > 120 ||
+          !contactPhone || !/^[0-9+() \-]{7,24}$/.test(contactPhone) || !location || location.length > 180 ||
+          !Number.isSafeInteger(workersNeeded) || workersNeeded < 1 || workersNeeded > 5000 ||
+          !clientEmail || clientEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+        return sendJSON(res, 400, { error: 'Please provide a valid company, contact person, email, phone, work location, worker count, title, skills and description.' });
       }
       const skills = rawSkills.split(',').map(s=>s.trim()).filter(Boolean).join(',');
       if (dbReady) {
-        const rows = await sql`INSERT INTO jobs (title, skills, budget, description, client_email, status) VALUES (${title}, ${skills}, ${budget}, ${description}, ${clientEmail}, 'open') RETURNING *`;
+        const rows = await sql`INSERT INTO jobs (title, skills, budget, description, company_name, contact_name, contact_phone, workers_needed, location, client_email, status) VALUES (${title}, ${skills}, ${budget}, ${description}, ${companyName}, ${contactName}, ${contactPhone}, ${workersNeeded}, ${location}, ${clientEmail}, 'open') RETURNING *`;
         const job = { id: rows[0].id, title: rows[0].title, skills: skills.split(','), budget: rows[0].budget, description: rows[0].description, status: rows[0].status, createdAt: rows[0].created_at };
         const talents = await getTalents();
         job.suggestedMatches = talents.filter(t => t.available && (t.skills||[]).some(s => job.skills.includes(s))).map(t => ({ id: t.id, name: t.name, title: t.title, rate: t.rate }));
