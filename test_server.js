@@ -158,7 +158,13 @@ test('frontend does not expose the old demo password and escapes submitted text'
   assert.match(server, /MANPOWER_ALERT_EMAIL/);
   assert.match(server, /RESEND_API_KEY/);
   assert.match(server, /RESEND_FROM/);
+  assert.match(server, /GOOGLE_APPS_SCRIPT_URL/);
+  assert.match(server, /GOOGLE_APPS_SCRIPT_SECRET/);
   assert.match(server, /await notifyManpowerRequest/);
+  const gas = fs.readFileSync(path.join(__dirname, 'google-apps-script', 'Code.gs'), 'utf8');
+  assert.match(gas, /TALENTBRIDGE_SHARED_SECRET/);
+  assert.match(gas, /easytiger\\.business@gmail\\.com/);
+  assert.match(gas, /MailApp\\.sendEmail/);
 });
 
 test('request bodies over 100 KB are rejected', async t => {
