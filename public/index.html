@@ -93,14 +93,18 @@
       <div class="hidden md:flex items-center gap-1 text-sm">
         <button onclick="show('home')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Home</button>
         <button onclick="show('talent')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Talent</button>
+        <button onclick="show('candidate')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Join Talent</button>
         <button onclick="show('jobs')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Jobs</button>
+        <button onclick="show('applicants')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Applicants</button>
         <button onclick="show('dashboard')" class="nav-btn px-4 py-2 rounded-lg font-medium text-slate-900">Dashboard</button>
         <button onclick="show('post')" class="ml-3 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-md">Post Job</button>
       </div>
       <div class="md:hidden w-full overflow-x-auto flex gap-1 pt-2 pb-1 text-xs" aria-label="Main navigation">
         <button onclick="show('home')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Home</button>
         <button onclick="show('talent')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Talent</button>
+        <button onclick="show('candidate')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Join Talent</button>
         <button onclick="show('jobs')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Leads</button>
+        <button onclick="show('applicants')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Applicants</button>
         <button onclick="show('dashboard')" class="shrink-0 px-3 py-2 rounded-lg text-slate-900 font-medium hover:bg-slate-100">Admin</button>
         <button onclick="show('post')" class="shrink-0 px-3 py-2 rounded-lg bg-brand-600 text-white font-medium">Request</button>
       </div>
@@ -120,7 +124,8 @@
           <p class="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-light">Source top professionals. Match them to clients. Track every commission.</p>
           <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <button onclick="show('talent')" class="bg-white text-slate-900 hover:bg-slate-100 px-8 py-4 rounded-2xl font-semibold transition shadow-xl">Browse Talent</button>
-            <button onclick="show('post')" class="bg-white/10 backdrop-blur border border-white/30 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-semibold transition">Post a Job</button>
+            <button onclick="show('candidate')" class="bg-emerald-400 hover:bg-emerald-300 text-slate-950 px-8 py-4 rounded-2xl font-semibold transition">Join Our Talent Pool</button>
+            <button onclick="show('post')" class="bg-white/10 backdrop-blur border border-white/30 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-semibold transition">Hire Talent</button>
           </div>
         </div>
       </div>
@@ -202,6 +207,47 @@
     <div id="jobResult" class="mt-4"></div>
   </div>
 
+  <!-- Candidate registration -->
+  <div id="candidate" class="section hidden max-w-3xl mx-auto px-4 md:px-6 py-12">
+    <div class="mb-8">
+      <p class="text-sm font-semibold text-brand-600 mb-2">FOR SKILLED WORKERS & PROFESSIONALS</p>
+      <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-3">Join the TalentBridge Network</h2>
+      <p class="text-slate-600">Tell us what you do and what opportunities you are looking for. We review every profile before sharing an approved public listing with potential clients.</p>
+    </div>
+    <form id="candidateForm" onsubmit="postCandidate(event)" class="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 space-y-4 shadow-sm">
+      <div class="grid md:grid-cols-2 gap-4">
+        <input name="fullName" placeholder="Full name" required maxlength="120" autocomplete="name" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="email" type="email" placeholder="Email address" required maxlength="254" autocomplete="email" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="phone" type="tel" placeholder="Mobile number" required maxlength="24" autocomplete="tel" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="location" placeholder="City / province / country" required maxlength="180" autocomplete="address-level2" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="title" placeholder="Main skill or job title" required maxlength="150" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="experience" placeholder="Experience (e.g. 3 years)" maxlength="100" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <input name="skills" placeholder="Skills / certifications (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <div class="grid md:grid-cols-2 gap-4">
+        <select name="workType" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">Preferred work arrangement</option>
+          <option>Remote</option>
+          <option>On-site</option>
+          <option>Hybrid</option>
+          <option>Contract / project-based</option>
+          <option>Open to options</option>
+        </select>
+        <input name="availability" placeholder="Availability (e.g. immediately)" maxlength="100" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <input name="rate" type="number" min="0" max="10000000" step="0.01" placeholder="Expected hourly rate in USD (optional)" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <textarea name="bio" placeholder="Brief introduction, work experience, or portfolio link (do not include IDs or sensitive documents)" maxlength="1500" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+      <label class="flex items-start gap-3 text-sm text-slate-600 leading-relaxed">
+        <input name="consent" type="checkbox" required class="mt-1 rounded border-slate-300">
+        <span>I consent to TalentBridge reviewing my application and, if approved, publishing my name, role, skills, short bio, and expected rate in the talent directory. My email and phone must stay private.</span>
+      </label>
+      <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" value="">
+      <p class="text-xs text-slate-500">We use these details to review your profile and contact you about suitable opportunities. Never submit passwords, government ID numbers, bank details, or other sensitive documents through this form.</p>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-xl font-medium transition">Submit My Profile</button>
+    </form>
+    <div id="candidateResult" aria-live="polite" class="mt-4"></div>
+  </div>
+
   <!-- Dashboard -->
   <div id="dashboard" class="section hidden max-w-7xl mx-auto px-6 py-12">
     <h2 class="text-3xl font-bold tracking-tight mb-2">Dashboard</h2>
@@ -223,16 +269,20 @@
     </div>
   </div>
 
-  <script>
-    const avatars = [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80'
-    ];
+  <!-- Private applicant review -->
+  <div id="applicants" class="section hidden max-w-7xl mx-auto px-4 md:px-6 py-12">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
+      <div>
+        <p class="text-sm font-semibold text-brand-600 mb-2">PRIVATE ADMIN AREA</p>
+        <h2 class="text-3xl font-bold tracking-tight mb-2">Candidate Applications</h2>
+        <p class="text-slate-500">Review submissions. Only approved profiles are added to the public talent directory; applicant contact details remain private.</p>
+      </div>
+      <button onclick="loadApplicants()" class="border border-slate-300 hover:bg-slate-50 px-4 py-2.5 rounded-xl text-sm font-medium">Refresh</button>
+    </div>
+    <div id="applicantList" class="space-y-4"></div>
+  </div>
 
+  <script>
     let token = sessionStorage.getItem('tb_token');
     let pendingSection = null;
     const adminHeaders = () => token ? { 'Authorization': 'Bearer ' + token } : {};
@@ -285,8 +335,8 @@
 
     function show(id) {
       if (!document.getElementById(id)) return;
-      if ((id === 'dashboard' || id === 'jobs') && !token) {
-        promptAdmin('dashboard');
+      if ((id === 'dashboard' || id === 'jobs' || id === 'applicants') && !token) {
+        promptAdmin(id === 'applicants' ? 'applicants' : 'dashboard');
         return;
       }
       document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -294,16 +344,17 @@
       if (id === 'talent') loadTalent();
       if (id === 'jobs') loadJobs();
       if (id === 'dashboard') loadDashboard();
+      if (id === 'applicants') loadApplicants();
     }
 
     async function loadTalent() {
       const talentResponse = await fetch('/api/talents');
       if (!talentResponse.ok) { document.getElementById('talentList').textContent = 'Talent profiles are temporarily unavailable.'; return; }
       const talents = await talentResponse.json();
-      document.getElementById('talentList').innerHTML = talents.map((t,i)=>`
+      document.getElementById('talentList').innerHTML = talents.map(t=>`
         <div class="talent-card bg-white border border-slate-200 rounded-3xl overflow-hidden">
-          <div class="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
-            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${escapeHtml(t.name)}">
+          <div class="h-48 bg-gradient-to-br from-brand-50 to-slate-100 relative flex items-center justify-center">
+            <div aria-label="Profile placeholder for ${escapeHtml(t.name)}" class="w-24 h-24 rounded-full bg-white border border-brand-100 shadow-sm flex items-center justify-center text-3xl font-bold text-brand-700">${escapeHtml((t.name || '?').split(/\s+/).map(part => part.charAt(0)).slice(0, 2).join('').toUpperCase())}</div>
             <div class="absolute top-3 right-3">
               <span class="text-xs font-medium px-2.5 py-1 rounded-full ${t.available?'bg-emerald-500 text-white':'bg-slate-500 text-white'}">${t.available?'Available':'Engaged'}</span>
             </div>
@@ -314,7 +365,7 @@
                 <h3 class="font-semibold text-lg">${escapeHtml(t.name)}</h3>
                 <p class="text-brand-600 text-sm">${escapeHtml(t.title)}</p>
               </div>
-              <div class="font-bold text-slate-900"> ${Number(t.rate)||0}<span class="text-xs font-normal text-slate-500">/hr</span></div>
+              <div class="font-bold text-slate-900">${Number(t.rate)>0 ? '$' + Number(t.rate).toLocaleString() + '<span class="text-xs font-normal text-slate-500">/hr</span>' : '<span class="text-sm font-medium text-slate-500">Rate on request</span>'}</div>
             </div>
             <div class="flex flex-wrap gap-1.5 mt-3">${t.skills.map(s=>`<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg">${escapeHtml(s)}</span>`).join('')}</div>
             ${t.bio?`<p class="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-2">${escapeHtml(t.bio)}</p>`:''}
@@ -354,6 +405,94 @@
           ${token && j.suggestedMatches?.length?`<div class="mt-4 flex flex-wrap gap-2">${j.suggestedMatches.map(m=>`<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-xl font-medium transition">${escapeHtml(m.name)} · ${Number(m.rate)||0}/hr</button>`).join('')}</div>`:''}
         </div>
       `).join('')||'<p class="text-slate-500 text-center py-16">No jobs yet.</p>';
+    }
+
+    async function postCandidate(e) {
+      e.preventDefault();
+      const result = document.getElementById('candidateResult');
+      const form = e.target;
+      const fd = new FormData(form);
+      const payload = Object.fromEntries(fd);
+      payload.consent = fd.get('consent') === 'on';
+      const submit = form.querySelector('button[type="submit"], button:not([type])');
+      if (submit) { submit.disabled = true; submit.textContent = 'Submitting...'; }
+      result.textContent = '';
+      try {
+        const res = await fetch('/api/candidates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          result.className = 'mt-4 text-sm text-red-700';
+          result.textContent = data.error || 'We could not submit your profile. Please try again.';
+          return;
+        }
+        form.reset();
+        result.className = 'mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800';
+        result.textContent = data.message || 'Your application has been received for review.';
+      } catch {
+        result.className = 'mt-4 text-sm text-red-700';
+        result.textContent = 'Connection error. Please check your internet and try again.';
+      } finally {
+        if (submit) { submit.disabled = false; submit.textContent = 'Submit My Profile'; }
+      }
+    }
+
+    async function loadApplicants() {
+      const list = document.getElementById('applicantList');
+      list.textContent = 'Loading candidate applications...';
+      try {
+        const res = await fetch('/api/candidates', { headers: adminHeaders() });
+        if (res.status === 401) { expireAdminSession('applicants'); return; }
+        const data = await res.json().catch(() => []);
+        if (!res.ok) { list.textContent = data.error || 'Candidate applications could not be loaded.'; return; }
+        list.innerHTML = data.map(c => `
+          <article class="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center flex-wrap gap-2 mb-2">
+                  <h3 class="font-semibold text-lg">${escapeHtml(c.fullName)}</h3>
+                  <span class="text-xs px-2.5 py-1 rounded-full ${c.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : c.status === 'rejected' ? 'bg-slate-100 text-slate-600' : 'bg-amber-100 text-amber-800'}">${escapeHtml(c.status)}</span>
+                </div>
+                <p class="text-brand-600 text-sm font-medium">${escapeHtml(c.title)}</p>
+                <p class="text-sm text-slate-600 mt-2">${(c.skills || []).map(escapeHtml).join(', ')}</p>
+                <p class="text-sm text-slate-600 mt-3 break-words">Email: ${escapeHtml(c.email)} · Phone: ${escapeHtml(c.phone)}</p>
+                <p class="text-sm text-slate-500 mt-1">${escapeHtml(c.location)} · ${escapeHtml(c.workType)} · ${escapeHtml(c.experience || 'Experience not specified')}</p>
+                <p class="text-sm text-slate-500 mt-1">Availability: ${escapeHtml(c.availability || 'Not specified')} · Expected USD/hour: ${Number(c.rate) > 0 ? escapeHtml(c.rate) : 'Not specified'}</p>
+                ${c.bio ? `<p class="text-sm text-slate-700 mt-3 whitespace-pre-line">${escapeHtml(c.bio)}</p>` : ''}
+              </div>
+              ${c.status === 'pending' ? `<div class="flex md:flex-col gap-2 shrink-0">
+                <button onclick="reviewCandidate(${Number(c.id)}, 'approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium">Approve & publish</button>
+                <button onclick="reviewCandidate(${Number(c.id)}, 'rejected')" class="border border-slate-300 hover:bg-slate-50 px-4 py-2.5 rounded-xl text-sm font-medium">Reject</button>
+              </div>` : ''}
+            </div>
+          </article>
+        `).join('') || '<p class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500">No candidate applications yet.</p>';
+      } catch {
+        list.textContent = 'Connection error while loading applications.';
+      }
+    }
+
+    async function reviewCandidate(id, status) {
+      if (!token) { promptAdmin('applicants'); return; }
+      const action = status === 'approved' ? 'approve and publish this candidate profile' : 'reject this candidate application';
+      if (!confirm('Are you sure you want to ' + action + '?')) return;
+      try {
+        const res = await fetch('/api/candidates/' + id + '/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) { expireAdminSession('applicants'); return; }
+        if (!res.ok) { alert(data.error || 'Could not update this application.'); return; }
+        await loadApplicants();
+        if (status === 'approved') alert('Candidate approved. A profile is now in the public talent directory.');
+      } catch {
+        alert('Connection error. Please try again.');
+      }
     }
 
     async function postJob(e) {
