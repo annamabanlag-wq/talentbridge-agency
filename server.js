@@ -29,6 +29,18 @@ async function initDB() {
       id SERIAL PRIMARY KEY,
       title TEXT, skills TEXT, budget TEXT, description TEXT, client_email TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
+
+    // Remove only the exact six fictional seed profiles shipped by the old demo version.
+    // Real candidate records that do not match all identifying fields are untouched.
+    const removedDemoProfiles = await sql`DELETE FROM talents WHERE
+      (name = 'Alex Rivera' AND title = 'Senior Full-Stack Developer' AND skills = 'React,Node.js,TypeScript,AWS' AND rate = 95 AND bio = '10+ years building scalable web applications.') OR
+      (name = 'Priya Sharma' AND title = 'UI/UX Designer' AND skills = 'Figma,Design Systems,User Research' AND rate = 75 AND bio = 'Specializes in product design and design systems.') OR
+      (name = 'Marcus Chen' AND title = 'Data Scientist' AND skills = 'Python,Machine Learning,SQL' AND rate = 110 AND bio = 'ML engineer with production experience.') OR
+      (name = 'Elena Volkov' AND title = 'Digital Marketing Strategist' AND skills = 'SEO,Paid Ads,Analytics' AND rate = 70 AND bio = 'Growth marketing for SaaS and e-commerce.') OR
+      (name = 'James Okonkwo' AND title = 'DevOps Engineer' AND skills = 'Kubernetes,CI/CD,Terraform' AND rate = 105 AND bio = 'Infrastructure and deployment specialist.') OR
+      (name = 'Sofia Alvarez' AND title = 'Product Manager' AND skills = 'Roadmapping,Agile,Analytics' AND rate = 90 AND bio = 'Technical PM with startup and enterprise experience.')
+      RETURNING id`;
+    if (removedDemoProfiles.length) console.log('Removed legacy fictional demo profiles:', removedDemoProfiles.length);
     await sql`CREATE TABLE IF NOT EXISTS matches (
       id SERIAL PRIMARY KEY,
       job_id INT, talent_id INT, status TEXT, paid BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT NOW(),
