@@ -226,7 +226,7 @@
       e.preventDefault();
       const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:document.getElementById('pass').value}) });
       const data = await res.json();
-      if (data.token) { localStorage.setItem('tb_token', data.token); document.getElementById('loginOverlay').classList.add('hidden'); }
+      if (data.token) { token = data.token; localStorage.setItem('tb_token', data.token); document.getElementById('loginOverlay').classList.add('hidden'); }
       else alert('Wrong password');
     }
 
