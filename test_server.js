@@ -148,6 +148,8 @@ test('frontend does not expose the old demo password and escapes submitted text'
   assert.equal(html.includes('talentbridge2026'), false);
   assert.equal(html.includes('localStorage'), false);
   assert.match(html, /function show\(id\)/);
+  assert.match(html, /aria-label="Main navigation"/);
+  assert.match(html, /onclick="show\('dashboard'\)" class="shrink-0/);
   assert.match(html, /escapeHtml/);
   assert.equal(server.includes('const seed = ['), false);
   assert.match(server, /DELETE FROM talents WHERE/);
