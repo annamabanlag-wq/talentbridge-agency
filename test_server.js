@@ -154,6 +154,11 @@ test('frontend does not expose the old demo password and escapes submitted text'
   assert.equal(server.includes('const seed = ['), false);
   assert.match(server, /DELETE FROM talents WHERE/);
   assert.equal(server.includes("Access-Control-Allow-Origin': '*'"), false);
+  assert.match(server, /async function notifyManpowerRequest/);
+  assert.match(server, /MANPOWER_ALERT_EMAIL/);
+  assert.match(server, /RESEND_API_KEY/);
+  assert.match(server, /RESEND_FROM/);
+  assert.match(server, /await notifyManpowerRequest/);
 });
 
 test('request bodies over 100 KB are rejected', async t => {
