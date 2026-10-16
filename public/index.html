@@ -331,7 +331,7 @@
       const jobResponse = await fetch('/api/jobs', {headers: adminHeaders()});
       if (jobResponse.status === 401) { expireAdminSession('jobs'); return; }
       if (!jobResponse.ok) { document.getElementById('jobsList').textContent = 'Job requests are temporarily unavailable. Check the database connection.'; return; }
-      const jobs = (await jobResponse.json()).map(j => ({...j, title: escapeHtml(j.title), description: escapeHtml(j.description), skills: (j.skills||[]).map(escapeHtml), status: String(j.status||'open'), companyName: escapeHtml(j.companyName), contactName: escapeHtml(j.contactName), contactPhone: escapeHtml(j.contactPhone), clientEmail: escapeHtml(j.clientEmail), location: escapeHtml(j.location), workersNeeded: Number(j.workersNeeded)||0, suggestedMatches: j.suggestedMatches||[]}));
+      const jobs = await jobResponse.json();
       document.getElementById('jobsList').innerHTML = jobs.map(j=>`
         <div class="bg-white border border-slate-200 rounded-3xl p-6">
           <div class="flex justify-between items-start">
@@ -354,8 +354,8 @@
       const res = await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))});
       const job = await res.json();
       if (!res.ok) { document.getElementById('jobResult').textContent = job.error || 'Unable to submit the job request. Please try again.'; return; }
-      document.getElementById('jobResult').textContent = 'Job request received. ' + (Number(job.suggestedMatches?.length)||0) + ' suggested matches.';
-      e.target.reset(); setTimeout(()=>show('jobs'),1200);
+      document.getElementById('jobResult').textContent = 'Request received. Our agency will contact you to confirm requirements and discuss suitable candidates and terms.';
+      e.target.reset();
     }
 
     async function createMatch(jobId, talentId) {
