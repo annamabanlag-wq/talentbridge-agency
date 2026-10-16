@@ -345,7 +345,7 @@
     function show(id) {
       if (!document.getElementById(id)) return;
       if ((id === 'dashboard' || id === 'jobs' || id === 'applicants') && !token) {
-        promptAdmin('dashboard');
+        promptAdmin(id === 'applicants' ? 'applicants' : 'dashboard');
         return;
       }
       document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
