@@ -4,7 +4,7 @@ const path = require('path');
 const url = require('url');
 const crypto = require('crypto');
 
-const PAYPAL_EMAIL = process.env.PAYPAL_EMAIL || 'rachelrob@live.com';
+const PAYPAL_EMAIL = process.env.PAYPAL_EMAIL || '';
 const COMMISSION_RATE = 0.22;
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS;
