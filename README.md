@@ -1,17 +1,24 @@
 # TalentBridge Agency
 
-Live talent agency platform with matching, invoicing, and PayPal revenue tracking.
+Talent sourcing and manpower placement platform with candidate matching, job requests, invoicing, and agency commission tracking.
 
-## Permanent Database (Neon Postgres)
+## Required Vercel environment variables
 
-1. In your Vercel project go to **Storage** → **Create Database** → **Neon** (free tier).
-2. Connect it to this project — Vercel automatically adds `DATABASE_URL`.
-3. Redeploy.
+Configure these in **Vercel → Project → Settings → Environment Variables** before deploying:
 
-The app will create tables and seed talent automatically. Data never resets.
+- `ADMIN_PASS`: a long, unique admin password (do not reuse a password from another service).
+- `DATABASE_URL`: Neon Postgres connection string. Without this, the app cannot provide durable storage; configure a database before accepting real client or worker data.
+- `PAYPAL_EMAIL`: optional business payment address only. Do not use a personal address unless you intentionally want it displayed on invoices.
 
-## Login
-Password: `talentbridge2026`
+After adding or changing variables, redeploy the project.
 
-## Revenue
-Commissions tracked to **rachelrob@live.com**
+## Admin access
+
+The admin login uses `ADMIN_PASS` from the deployment environment. There is no default password in the source code. Admin sessions expire after eight hours. Protected routes require the bearer token returned by `/api/login`.
+
+## Before launch
+
+- Confirm the database is connected and data persists across restarts.
+- Use only verified candidate profiles and real, consented client requests.
+- Review local employment, recruitment, privacy, and placement-fee requirements before charging clients or workers.
+- Never treat a displayed invoice or manually marked payment as proof that a payment provider has settled funds.
