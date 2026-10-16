@@ -92,6 +92,76 @@ async function notifyManpowerRequest(lead) {
   }
 }
 
+async function notifyCandidateApplication(candidate) {
+  const gmailRelayConfigured = Boolean(GOOGLE_APPS_SCRIPT_URL && GOOGLE_APPS_SCRIPT_SECRET);
+  const resendConfigured = Boolean(RESEND_API_KEY && RESEND_FROM);
+  if (!MANPOWER_ALERT_EMAIL || (!gmailRelayConfigured && !resendConfigured)) {
+    console.warn('Candidate alert email skipped: configure MANPOWER_ALERT_EMAIL and a supported sender.');
+    return false;
+  }
+
+  const subject = 'New candidate application #' + candidate.id + ' — ' + candidate.fullName;
+  const text = [
+    'A new candidate application was submitted to TalentBridge.',
+    '',
+    'Application ID: ' + candidate.id,
+    'Name: ' + candidate.fullName,
+    'Email: ' + candidate.email,
+    'Phone: ' + candidate.phone,
+    'Location: ' + candidate.location,
+    'Role: ' + candidate.title,
+    'Skills: ' + candidate.skills.join(', '),
+    'Experience: ' + (candidate.experience || 'Not specified'),
+    'Work preference: ' + candidate.workType,
+    'Availability: ' + (candidate.availability || 'Not specified'),
+    'Expected hourly rate (USD): ' + (candidate.rate > 0 ? candidate.rate : 'Not specified'),
+    '',
+    'Review this application in the private TalentBridge admin dashboard.'
+  ].join('\n');
+  const html = '<h2>New candidate application</h2><table>' +
+    [['Application ID', candidate.id], ['Name', candidate.fullName], ['Email', candidate.email],
+     ['Phone', candidate.phone], ['Location', candidate.location], ['Role', candidate.title],
+     ['Skills', candidate.skills.join(', ')], ['Experience', candidate.experience || 'Not specified'],
+     ['Work preference', candidate.workType], ['Availability', candidate.availability || 'Not specified'],
+     ['Expected hourly rate (USD)', candidate.rate > 0 ? candidate.rate : 'Not specified']].map(([label, value]) =>
+       '<tr><th align="left" style="padding:6px">' + escapeEmailHtml(label) + '</th><td style="padding:6px">' + escapeEmailHtml(value) + '</td></tr>'
+     ).join('') + '</table><p>Review this application in the private TalentBridge admin dashboard.</p>';
+
+  if (gmailRelayConfigured) {
+    try {
+      const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: GOOGLE_APPS_SCRIPT_SECRET, to: MANPOWER_ALERT_EMAIL, subject, text, html }),
+        signal: AbortSignal.timeout(15000)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result && result.ok === true) return true;
+      console.error('Candidate Gmail relay rejected the request; status:', response.status);
+    } catch (error) {
+      console.error('Candidate Gmail relay request failed:', error?.name || 'UnknownError');
+    }
+  }
+
+  if (!resendConfigured) return false;
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: RESEND_FROM, to: [MANPOWER_ALERT_EMAIL], subject, text, html }),
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) {
+      console.error('Candidate alert email provider rejected the request; status:', response.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Candidate alert email delivery request failed:', error?.name || 'UnknownError');
+    return false;
+  }
+}
+
 let sql;
 let dbReady = false;
 
@@ -118,6 +188,23 @@ async function initDB() {
     await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS contact_phone TEXT`;
     await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS workers_needed INT`;
     await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS location TEXT`;
+    await sql`CREATE TABLE IF NOT EXISTS candidate_applications (
+      id SERIAL PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      location TEXT NOT NULL,
+      title TEXT NOT NULL,
+      skills TEXT NOT NULL,
+      years_experience TEXT,
+      work_type TEXT NOT NULL,
+      availability TEXT,
+      rate NUMERIC DEFAULT 0,
+      bio TEXT,
+      consent BOOLEAN NOT NULL DEFAULT FALSE,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
 
     // Remove only the exact six fictional seed profiles shipped by the old demo version.
     // Real candidate records that do not match all identifying fields are untouched.
@@ -302,6 +389,86 @@ const server = http.createServer(async (req, res) => {
       const t = { id: mem.nextId++, name, title, skills: skills.split(','), rate, available: true, bio };
       mem.talents.push(t);
       return sendJSON(res, 201, t);
+    }
+
+    if (pathname === '/api/candidates' && req.method === 'POST') {
+      if (!dbReady) return sendJSON(res, 503, { error: 'Applications are temporarily unavailable because persistent storage is not connected. Please try again later.' });
+      const body = await parseBody(req);
+      if (bodyError(body, res)) return;
+      if (typeof body.website === 'string' && body.website.trim()) {
+        return sendJSON(res, 400, { error: 'Unable to submit this application.' });
+      }
+      const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : '';
+      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
+      const location = typeof body.location === 'string' ? body.location.trim() : '';
+      const title = typeof body.title === 'string' ? body.title.trim() : '';
+      const rawSkills = typeof body.skills === 'string' ? body.skills.trim() : '';
+      const experience = typeof body.experience === 'string' ? body.experience.trim() : '';
+      const workType = typeof body.workType === 'string' ? body.workType.trim() : '';
+      const availability = typeof body.availability === 'string' ? body.availability.trim() : '';
+      const rate = body.rate === '' || body.rate == null ? 0 : Number(body.rate);
+      const bio = typeof body.bio === 'string' ? body.bio.trim() : '';
+      const allowedWorkTypes = ['Remote', 'On-site', 'Hybrid', 'Contract / project-based', 'Open to options'];
+      if (!fullName || fullName.length > 120 || !email || email.length > 254 ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+          !phone || !/^[0-9+() \-]{7,24}$/.test(phone) ||
+          !location || location.length > 180 || !title || title.length > 150 ||
+          !rawSkills || rawSkills.length > 500 || experience.length > 100 ||
+          !allowedWorkTypes.includes(workType) || availability.length > 100 ||
+          !Number.isFinite(rate) || rate < 0 || rate > 10000000 || bio.length > 1500 ||
+          body.consent !== true) {
+        return sendJSON(res, 400, { error: 'Please check your details, choose a work preference, and give consent to the profile review and possible publication.' });
+      }
+      const skills = rawSkills.split(',').map(s => s.trim()).filter(Boolean).join(',');
+      if (!skills) return sendJSON(res, 400, { error: 'Enter at least one skill.' });
+      const rows = await sql`INSERT INTO candidate_applications
+        (full_name, email, phone, location, title, skills, years_experience, work_type, availability, rate, bio, consent, status)
+        VALUES (${fullName}, ${email}, ${phone}, ${location}, ${title}, ${skills}, ${experience}, ${workType}, ${availability}, ${rate}, ${bio}, TRUE, 'pending')
+        RETURNING id, status`;
+      const candidate = { id: rows[0].id, fullName, email, phone, location, title, skills: skills.split(','), experience, workType, availability, rate, bio };
+      await notifyCandidateApplication(candidate);
+      return sendJSON(res, 201, { id: candidate.id, status: 'pending', message: 'Application received. Our team will review your profile and contact you if there is a suitable opportunity.' });
+    }
+
+    if (pathname === '/api/candidates' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      if (!dbReady) return sendJSON(res, 503, { error: 'Persistent database unavailable; candidate applications cannot be loaded.' });
+      const rows = await sql`SELECT * FROM candidate_applications ORDER BY id DESC`;
+      return sendJSON(res, 200, rows.map(r => ({
+        id: r.id, fullName: r.full_name, email: r.email, phone: r.phone, location: r.location,
+        title: r.title, skills: (r.skills || '').split(',').filter(Boolean),
+        experience: r.years_experience || '', workType: r.work_type, availability: r.availability || '',
+        rate: Number(r.rate) || 0, bio: r.bio || '', status: r.status, createdAt: r.created_at
+      })));
+    }
+
+    const candidateReviewMatch = pathname.match(/^\/api\/candidates\/(\d+)\/review$/);
+    if (candidateReviewMatch && req.method === 'POST') {
+      if (!requireAdmin(req, res)) return;
+      if (!dbReady) return sendJSON(res, 503, { error: 'Persistent database unavailable; candidate status was not changed.' });
+      const body = await parseBody(req);
+      if (bodyError(body, res)) return;
+      if (body.status !== 'approved' && body.status !== 'rejected') {
+        return sendJSON(res, 400, { error: 'Status must be approved or rejected.' });
+      }
+      const candidateId = Number(candidateReviewMatch[1]);
+      const rows = await sql`SELECT * FROM candidate_applications WHERE id = ${candidateId}`;
+      if (!rows.length) return sendJSON(res, 404, { error: 'Candidate application not found.' });
+      const candidate = rows[0];
+      if (candidate.status !== 'pending') return sendJSON(res, 409, { error: 'This application has already been reviewed.' });
+      let talentId = null;
+      if (body.status === 'approved') {
+        if (candidate.consent !== true) return sendJSON(res, 409, { error: 'The candidate has not consented to publication.' });
+        const publicBio = [candidate.bio || '', candidate.years_experience ? candidate.years_experience + ' experience' : '',
+          candidate.work_type ? 'Preferred work: ' + candidate.work_type : ''].filter(Boolean).join(' · ').slice(0, 1500);
+        const talentRows = await sql`INSERT INTO talents (name, title, skills, rate, rating, available, bio)
+          VALUES (${candidate.full_name}, ${candidate.title}, ${candidate.skills}, ${Number(candidate.rate) || 0}, 0, TRUE, ${publicBio})
+          RETURNING id`;
+        talentId = talentRows[0].id;
+      }
+      await sql`UPDATE candidate_applications SET status = ${body.status} WHERE id = ${candidateId}`;
+      return sendJSON(res, 200, { ok: true, status: body.status, talentId });
     }
 
     if (pathname === '/api/jobs' && req.method === 'GET') {
