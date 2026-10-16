@@ -38,21 +38,7 @@ async function initDB() {
       id SERIAL PRIMARY KEY,
       match_id INT, amount NUMERIC, paypal TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
-    const count = await sql`SELECT COUNT(*) FROM talents`;
-    if (Number(count[0].count) === 0) {
-      const seed = [
-        ["Alex Rivera", "Senior Full-Stack Developer", "React,Node.js,TypeScript,AWS", 95, 4.9, true, "10+ years building scalable web applications."],
-        ["Priya Sharma", "UI/UX Designer", "Figma,Design Systems,User Research", 75, 4.8, true, "Specializes in product design and design systems."],
-        ["Marcus Chen", "Data Scientist", "Python,Machine Learning,SQL", 110, 5.0, true, "ML engineer with production experience."],
-        ["Elena Volkov", "Digital Marketing Strategist", "SEO,Paid Ads,Analytics", 70, 4.7, true, "Growth marketing for SaaS and e-commerce."],
-        ["James Okonkwo", "DevOps Engineer", "Kubernetes,CI/CD,Terraform", 105, 4.9, true, "Infrastructure and deployment specialist."],
-        ["Sofia Alvarez", "Product Manager", "Roadmapping,Agile,Analytics", 90, 4.8, true, "Technical PM with startup and enterprise experience."]
-      ];
-      for (const t of seed) {
-        await sql`INSERT INTO talents (name, title, skills, rate, rating, available, bio) VALUES (${t[0]}, ${t[1]}, ${t[2]}, ${t[3]}, ${t[4]}, ${t[5]}, ${t[6]})`;
-      }
-      console.log('Database seeded');
-    }
+    // Do not seed fictional candidate profiles into a real agency directory.
     dbReady = true;
     console.log('Database connected');
   } catch (e) {
@@ -73,8 +59,8 @@ function createAdminToken() {
 }
 
 function requireAdmin(req, res) {
-  if (!ADMIN_PASS) {
-    sendJSON(res, 503, { error: 'Admin login is not configured. Set ADMIN_PASS in deployment environment variables.' });
+  if (!ADMIN_PASS || ADMIN_PASS.length < 20) {
+    sendJSON(res, 503, { error: 'Admin login requires a unique ADMIN_PASS of at least 20 characters in deployment environment variables.' });
     return false;
   }
   const header = req.headers.authorization || '';
@@ -181,7 +167,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/login' && req.method === 'POST') {
       const body = await parseBody(req);
       if (bodyError(body, res)) return;
-      if (!ADMIN_PASS) return sendJSON(res, 503, { error: 'Admin login is not configured. Set ADMIN_PASS in deployment environment variables.' });
+      if (!ADMIN_PASS || ADMIN_PASS.length < 20) return sendJSON(res, 503, { error: 'Admin login requires a unique ADMIN_PASS of at least 20 characters in deployment environment variables.' });
       if (typeof body.password === 'string' && Buffer.byteLength(body.password, 'utf8') <= 512 && body.password === ADMIN_PASS) {
         return sendJSON(res, 200, { token: createAdminToken() });
       }
@@ -233,7 +219,7 @@ const server = http.createServer(async (req, res) => {
       const budget = typeof body.budget === 'string' ? body.budget.trim() : '';
       const description = typeof body.description === 'string' ? body.description.trim() : '';
       const clientEmail = typeof body.clientEmail === 'string' ? body.clientEmail.trim() : '';
-      if (!title || title.length > 150 || !rawSkills || rawSkills.length > 500 || !description || description.length > 3000 || budget.length > 100 || clientEmail.length > 254 || (clientEmail && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(clientEmail))) {
+      if (!title || title.length > 150 || !rawSkills || rawSkills.length > 500 || !description || description.length > 3000 || budget.length > 100 || clientEmail.length > 254 || (clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail))) {
         return sendJSON(res, 400, { error: 'Invalid job request. Check title, skills, description, budget and contact email.' });
       }
       const skills = rawSkills.split(',').map(s=>s.trim()).filter(Boolean).join(',');
