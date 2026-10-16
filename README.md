@@ -9,8 +9,11 @@ Configure these in **Vercel → Project → Settings → Environment Variables**
 - `ADMIN_PASS`: a unique random secret of at least 20 characters. Store it as a **Sensitive** value for Preview and Production.
 - `DATABASE_URL`: Neon Postgres connection string. The app checks connectivity during startup and fails closed for business writes if the database is unavailable.
 - `PAYPAL_EMAIL`: optional business payment address for internal invoice records. Do not use a personal address unless that is intentional.
+- `MANPOWER_ALERT_EMAIL`: recipient for new company manpower-request notifications.
+- `RESEND_API_KEY`: a Resend API key with sending permission; keep it Sensitive.
+- `RESEND_FROM`: a sender address on a verified sending domain in Resend. A Gmail recipient address alone does not authorize sending from Gmail.
 
-Redeploy after changing environment variables. Never commit secrets to GitHub or put them in public frontend code.
+Redeploy after changing environment variables. Never commit secrets to GitHub or put them in public frontend code. The notification code does not block a company request if email delivery is temporarily unavailable; it logs a generic delivery/configuration error.
 
 ## Access and privacy
 
