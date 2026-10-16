@@ -283,15 +283,6 @@
   </div>
 
   <script>
-    const avatars = [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80'
-    ];
-
     let token = sessionStorage.getItem('tb_token');
     let pendingSection = null;
     const adminHeaders = () => token ? { 'Authorization': 'Bearer ' + token } : {};
@@ -360,10 +351,10 @@
       const talentResponse = await fetch('/api/talents');
       if (!talentResponse.ok) { document.getElementById('talentList').textContent = 'Talent profiles are temporarily unavailable.'; return; }
       const talents = await talentResponse.json();
-      document.getElementById('talentList').innerHTML = talents.map((t,i)=>`
+      document.getElementById('talentList').innerHTML = talents.map(t=>`
         <div class="talent-card bg-white border border-slate-200 rounded-3xl overflow-hidden">
-          <div class="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
-            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${escapeHtml(t.name)}">
+          <div class="h-48 bg-gradient-to-br from-brand-50 to-slate-100 relative flex items-center justify-center">
+            <div aria-label="Profile placeholder for ${escapeHtml(t.name)}" class="w-24 h-24 rounded-full bg-white border border-brand-100 shadow-sm flex items-center justify-center text-3xl font-bold text-brand-700">${escapeHtml((t.name || '?').split(/\s+/).map(part => part.charAt(0)).slice(0, 2).join('').toUpperCase())}</div>
             <div class="absolute top-3 right-3">
               <span class="text-xs font-medium px-2.5 py-1 rounded-full ${t.available?'bg-emerald-500 text-white':'bg-slate-500 text-white'}">${t.available?'Available':'Engaged'}</span>
             </div>
