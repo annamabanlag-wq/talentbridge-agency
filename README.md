@@ -10,10 +10,11 @@ Configure these in **Vercel → Project → Settings → Environment Variables**
 - `DATABASE_URL`: Neon Postgres connection string. The app checks connectivity during startup and fails closed for business writes if the database is unavailable.
 - `PAYPAL_EMAIL`: optional business payment address for internal invoice records. Do not use a personal address unless that is intentional.
 - `MANPOWER_ALERT_EMAIL`: recipient for new company manpower-request notifications.
-- `RESEND_API_KEY`: a Resend API key with sending permission; keep it Sensitive.
-- `RESEND_FROM`: a sender address on a verified sending domain in Resend. A Gmail recipient address alone does not authorize sending from Gmail.
+- `GOOGLE_APPS_SCRIPT_URL`: optional Google Apps Script web-app URL ending in `/exec`.
+- `GOOGLE_APPS_SCRIPT_SECRET`: the same private string stored as the `TALENTBRIDGE_SHARED_SECRET` Script Property in Google Apps Script. Keep it **Sensitive** in Vercel and never commit it.
+- `RESEND_API_KEY` and `RESEND_FROM`: optional alternative if a verified Resend sender domain is available.
 
-Redeploy after changing environment variables. Never commit secrets to GitHub or put them in public frontend code. The notification code does not block a company request if email delivery is temporarily unavailable; it logs a generic delivery/configuration error.
+**Free Gmail setup:** Open [Google Apps Script](https://script.google.com), create a project, and copy `google-apps-script/Code.gs` into it. Add the Script Property `TALENTBRIDGE_SHARED_SECRET` with the same secret value configured in Vercel. Run `setupAuthorization` once and approve the mail permission. Deploy the script as a web app executing as your account, then set the returned `/exec` URL as `GOOGLE_APPS_SCRIPT_URL` in Vercel. If available, use access setting `Anyone`; every request is checked against the private shared secret and the code only permits delivery to the fixed agency recipient. Redeploy Vercel after setting the URL. Never commit secrets to GitHub or put them in public frontend code. The notification code does not block a company request if email delivery is temporarily unavailable; it logs a generic delivery/configuration error.
 
 ## Access and privacy
 
