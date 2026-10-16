@@ -78,6 +78,7 @@ test('admin routes require a valid stateless bearer token', async t => {
   for (const [pathname, method, body] of [
     ['/api/stats', 'GET'],
     ['/api/matches', 'GET'],
+    ['/api/jobs', 'GET'],
     ['/api/invoices', 'GET'],
     ['/api/talents', 'POST', { name: 'Test', title: 'Tester', skills: 'testing', rate: 1 }],
     ['/api/matches', 'POST', { jobId: 1, talentId: 1, hours: 1 }],
@@ -148,7 +149,8 @@ test('frontend does not expose the old demo password and escapes submitted text'
   assert.equal(html.includes('localStorage'), false);
   assert.match(html, /function show\(id\)/);
   assert.match(html, /escapeHtml/);
-  assert.equal(server.includes('Alex Rivera'), false);
+  assert.equal(server.includes('const seed = ['), false);
+  assert.match(server, /DELETE FROM talents WHERE/);
   assert.equal(server.includes("Access-Control-Allow-Origin': '*'"), false);
 });
 
