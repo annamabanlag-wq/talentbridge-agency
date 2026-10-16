@@ -83,7 +83,7 @@
 
   <!-- Nav -->
   <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 min-h-16 flex flex-col md:flex-row md:items-center md:justify-between py-2">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center text-white shadow">
           <i class="fas fa-bridge"></i>
@@ -96,6 +96,13 @@
         <button onclick="show('jobs')" class="nav-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">Jobs</button>
         <button onclick="show('dashboard')" class="nav-btn px-4 py-2 rounded-lg font-medium text-slate-900">Dashboard</button>
         <button onclick="show('post')" class="ml-3 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition shadow-md">Post Job</button>
+      </div>
+      <div class="md:hidden w-full overflow-x-auto flex gap-1 pt-2 pb-1 text-xs" aria-label="Main navigation">
+        <button onclick="show('home')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Home</button>
+        <button onclick="show('talent')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Talent</button>
+        <button onclick="show('jobs')" class="shrink-0 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100">Leads</button>
+        <button onclick="show('dashboard')" class="shrink-0 px-3 py-2 rounded-lg text-slate-900 font-medium hover:bg-slate-100">Admin</button>
+        <button onclick="show('post')" class="shrink-0 px-3 py-2 rounded-lg bg-brand-600 text-white font-medium">Request</button>
       </div>
     </div>
   </nav>
