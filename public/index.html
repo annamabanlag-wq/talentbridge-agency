@@ -64,7 +64,7 @@
 <body class="bg-slate-50 text-slate-900 antialiased">
 
   <!-- Login -->
-  <div id="loginOverlay" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+  <div id="loginOverlay" class="fixed inset-0 hidden bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-up">
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 text-white mb-4 shadow-lg">
@@ -77,7 +77,7 @@
         <input id="pass" type="password" placeholder="Password" class="w-full border border-slate-200 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" required>
         <button class="w-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-600 text-white py-3.5 rounded-2xl font-medium transition shadow-lg shadow-brand-600/20">Sign in</button>
       </form>
-      <p class="text-xs text-center text-slate-400 mt-6">Password: talentbridge2026</p>
+      <p class="text-xs text-center text-slate-400 mt-6">Authorized staff only. Use the admin password configured by the agency administrator.</p><button type="button" onclick="pendingSection=null; document.getElementById(&quot;loginOverlay&quot;).classList.add(&quot;hidden&quot;)" class="w-full mt-3 text-sm text-slate-500 hover:text-slate-800">Cancel</button>
     </div>
   </div>
 
@@ -107,7 +107,7 @@
         <div class="animate-fade-up" style="animation-delay: 0.1s">
           <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur text-white text-xs font-medium px-4 py-1.5 rounded-full mb-6">
             <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-            Live Agency Platform
+            Manpower & Talent Sourcing
           </div>
           <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">TalentBridge</h1>
           <p class="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-light">Source top professionals. Match them to clients. Track every commission.</p>
@@ -125,7 +125,7 @@
         <div class="text-center animate-fade-up" style="animation-delay: 0.2s">
           <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-users"></i></div>
           <h3 class="font-semibold mb-1">Talent Pool</h3>
-          <p class="text-sm text-slate-500">Vetted professionals ready to work</p>
+          <p class="text-sm text-slate-500">Worker profiles managed by our agency</p>
         </div>
         <div class="text-center animate-fade-up" style="animation-delay: 0.3s">
           <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-link"></i></div>
@@ -146,9 +146,9 @@
     <div class="flex items-center justify-between mb-10">
       <div>
         <h2 class="text-3xl font-bold tracking-tight">Talent Pool</h2>
-        <p class="text-slate-500 mt-1">Professionals ready for matching</p>
+        <p class="text-slate-500 mt-1">Profiles added by the agency after review and consent</p>
       </div>
-      <button onclick="document.getElementById('addTalent').classList.toggle('hidden')" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-xl text-sm font-medium transition shadow-md">+ Add Talent</button>
+      <button id="addTalentToggle" onclick="document.getElementById('addTalent').classList.toggle('hidden')" class="hidden bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-xl text-sm font-medium transition shadow-md">+ Add Talent</button>
     </div>
 
     <form id="addTalent" class="hidden bg-white border border-slate-200 rounded-3xl p-6 mb-10 grid md:grid-cols-2 gap-4 shadow-sm" onsubmit="addTalent(event)">
@@ -172,16 +172,24 @@
 
   <!-- Post -->
   <div id="post" class="section hidden max-w-2xl mx-auto px-6 py-12">
-    <h2 class="text-3xl font-bold tracking-tight mb-2">Post a Job</h2>
-    <p class="text-slate-500 mb-8">We'll match talent automatically</p>
+    <h2 class="text-3xl font-bold tracking-tight mb-2">Request Manpower</h2>
+    <p class="text-slate-500 mb-8">Tell us your staffing needs. Our agency will follow up to discuss suitable candidates and terms.</p>
     <form onsubmit="postJob(event)" class="bg-white border border-slate-200 rounded-3xl p-8 space-y-4 shadow-sm">
-      <input name="title" placeholder="Job title" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="skills" placeholder="Required skills" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="companyName" placeholder="Company name" required maxlength="180" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="contactName" placeholder="Contact person" required maxlength="120" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       <div class="grid grid-cols-2 gap-4">
-        <input name="budget" placeholder="Budget" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <input name="clientEmail" type="email" placeholder="Client email" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="clientEmail" type="email" placeholder="Business email" required maxlength="254" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="contactPhone" type="tel" placeholder="Contact phone" required maxlength="24" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
-      <textarea name="description" placeholder="Description" required rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+      <div class="grid grid-cols-2 gap-4">
+        <input name="title" placeholder="Role / job title" required maxlength="150" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="workersNeeded" type="number" min="1" max="5000" placeholder="Workers needed" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <input name="location" placeholder="Work location (city / area)" required maxlength="180" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="skills" placeholder="Required skills (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="budget" placeholder="Budget / target rate (optional)" maxlength="100" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <textarea name="description" placeholder="Responsibilities, shift, contract period, start date and other requirements" required maxlength="3000" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+      <p class="text-xs text-slate-500">Your contact details are visible only to authorized agency staff and are not included in public job listings.</p>
       <button class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-xl font-medium transition">Submit Job</button>
     </form>
     <div id="jobResult" class="mt-4"></div>
@@ -218,31 +226,77 @@
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80'
     ];
 
-    let token = localStorage.getItem('tb_token');
-    if (token) document.getElementById('loginOverlay').classList.add('hidden');
+    let token = sessionStorage.getItem('tb_token');
+    let pendingSection = null;
+    const adminHeaders = () => token ? { 'Authorization': 'Bearer ' + token } : {};
+    const escapeHtml = value => String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    function updateAdminControls() {
+      document.getElementById('addTalentToggle').classList.toggle('hidden', !token);
+    }
+    updateAdminControls();
+
+    function promptAdmin(section) {
+      pendingSection = section || 'dashboard';
+      document.getElementById('loginOverlay').classList.remove('hidden');
+    }
+
+    function expireAdminSession(section) {
+      token = null;
+      sessionStorage.removeItem('tb_token');
+      updateAdminControls();
+      promptAdmin(section || 'dashboard');
+    }
 
     async function doLogin(e) {
       e.preventDefault();
-      const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:document.getElementById('pass').value}) });
-      const data = await res.json();
-      if (data.token) { localStorage.setItem('tb_token', data.token); document.getElementById('loginOverlay').classList.add('hidden'); }
-      else alert('Wrong password');
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({password: document.getElementById('pass').value})
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.token) {
+          alert(data.error || 'Sign-in failed. Check the admin configuration.');
+          return;
+        }
+        token = data.token;
+        sessionStorage.setItem('tb_token', data.token);
+        document.getElementById('pass').value = '';
+        document.getElementById('loginOverlay').classList.add('hidden');
+        updateAdminControls();
+        const target = pendingSection || 'home';
+        pendingSection = null;
+        show(target);
+      } catch {
+        alert('Could not contact the agency server. Please try again.');
+      }
     }
 
     function show(id) {
+      if (!document.getElementById(id)) return;
+      if ((id === 'dashboard' || id === 'jobs') && !token) {
+        promptAdmin('dashboard');
+        return;
+      }
       document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
-      if (id==='talent') loadTalent();
-      if (id==='jobs') loadJobs();
-      if (id==='dashboard') loadDashboard();
+      if (id === 'talent') loadTalent();
+      if (id === 'jobs') loadJobs();
+      if (id === 'dashboard') loadDashboard();
     }
 
     async function loadTalent() {
-      const talents = await (await fetch('/api/talents')).json();
+      const talentResponse = await fetch('/api/talents');
+      if (!talentResponse.ok) { document.getElementById('talentList').textContent = 'Talent profiles are temporarily unavailable.'; return; }
+      const talents = await talentResponse.json();
       document.getElementById('talentList').innerHTML = talents.map((t,i)=>`
         <div class="talent-card bg-white border border-slate-200 rounded-3xl overflow-hidden">
           <div class="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
-            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${t.name}">
+            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${escapeHtml(t.name)}">
             <div class="absolute top-3 right-3">
               <span class="text-xs font-medium px-2.5 py-1 rounded-full ${t.available?'bg-emerald-500 text-white':'bg-slate-500 text-white'}">${t.available?'Available':'Engaged'}</span>
             </div>
@@ -250,65 +304,88 @@
           <div class="p-5">
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="font-semibold text-lg">${t.name}</h3>
-                <p class="text-brand-600 text-sm">${t.title}</p>
+                <h3 class="font-semibold text-lg">${escapeHtml(t.name)}</h3>
+                <p class="text-brand-600 text-sm">${escapeHtml(t.title)}</p>
               </div>
-              <div class="font-bold text-slate-900">$${t.rate}<span class="text-xs font-normal text-slate-500">/hr</span></div>
+              <div class="font-bold text-slate-900"> ${Number(t.rate)||0}<span class="text-xs font-normal text-slate-500">/hr</span></div>
             </div>
-            <div class="flex flex-wrap gap-1.5 mt-3">${t.skills.map(s=>`<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg">${s}</span>`).join('')}</div>
-            ${t.bio?`<p class="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-2">${t.bio}</p>`:''}
+            <div class="flex flex-wrap gap-1.5 mt-3">${t.skills.map(s=>`<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg">${escapeHtml(s)}</span>`).join('')}</div>
+            ${t.bio?`<p class="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-2">${escapeHtml(t.bio)}</p>`:''}
           </div>
         </div>
       `).join('') || '<p class="text-slate-500 col-span-full text-center py-16">No talent yet.</p>';
     }
 
     async function addTalent(e) {
-      e.preventDefault(); const fd=new FormData(e.target);
-      await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))});
+      e.preventDefault();
+      if (!token) { promptAdmin('talent'); return; }
+      const fd=new FormData(e.target);
+      const res = await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify(Object.fromEntries(fd))});
+      const data = await res.json();
+      if (res.status === 401) { expireAdminSession('talent'); return; }
+      if (!res.ok) { alert(data.error || 'Could not save talent. Check admin configuration and database.'); return; }
       e.target.reset(); e.target.classList.add('hidden'); loadTalent();
     }
 
     async function loadJobs() {
-      const jobs = await (await fetch('/api/jobs')).json();
+      const jobResponse = await fetch('/api/jobs', {headers: adminHeaders()});
+      if (jobResponse.status === 401) { expireAdminSession('jobs'); return; }
+      if (!jobResponse.ok) { document.getElementById('jobsList').textContent = 'Job requests are temporarily unavailable. Check the database connection.'; return; }
+      const jobs = await jobResponse.json();
       document.getElementById('jobsList').innerHTML = jobs.map(j=>`
         <div class="bg-white border border-slate-200 rounded-3xl p-6">
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="font-semibold text-lg">${j.title}</h3>
-              <p class="text-sm text-slate-500 mt-0.5">${(j.skills||[]).join(', ')}</p>
+              <h3 class="font-semibold text-lg">${escapeHtml(j.title)}</h3>
+              <p class="text-sm text-slate-500 mt-0.5">${(j.skills||[]).map(escapeHtml).join(', ')}</p>
+              <p class="text-sm text-slate-700 mt-2"><strong>${escapeHtml(j.companyName)}</strong> · ${escapeHtml(j.location)} · ${Number(j.workersNeeded)||0} worker(s)</p>
+              <p class="text-xs text-slate-500 mt-1">Contact: ${escapeHtml(j.contactName)} · ${escapeHtml(j.clientEmail)} · ${escapeHtml(j.contactPhone)}</p>
             </div>
-            <span class="text-xs font-medium px-3 py-1 rounded-full ${j.status==='matched'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700'}">${j.status}</span>
+            <span class="text-xs font-medium px-3 py-1 rounded-full ${j.status==='matched'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700'}">${escapeHtml(j.status)}</span>
           </div>
-          <p class="text-sm text-slate-600 mt-3">${j.description}</p>
-          ${j.suggestedMatches?.length?`<div class="mt-4 flex flex-wrap gap-2">${j.suggestedMatches.map(m=>`<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-xl font-medium transition">${m.name} · $${m.rate}/hr</button>`).join('')}</div>`:''}
+          <p class="text-sm text-slate-600 mt-3">${escapeHtml(j.description)}</p>
+          ${token && j.suggestedMatches?.length?`<div class="mt-4 flex flex-wrap gap-2">${j.suggestedMatches.map(m=>`<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-xl font-medium transition">${escapeHtml(m.name)} · ${Number(m.rate)||0}/hr</button>`).join('')}</div>`:''}
         </div>
       `).join('')||'<p class="text-slate-500 text-center py-16">No jobs yet.</p>';
     }
 
     async function postJob(e) {
       e.preventDefault(); const fd=new FormData(e.target);
-      const job = await (await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))})).json();
-      document.getElementById('jobResult').innerHTML=`<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl">Posted. ${job.suggestedMatches?.length||0} matches suggested.</div>`;
-      e.target.reset(); setTimeout(()=>show('jobs'),1200);
+      const res = await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))});
+      const job = await res.json();
+      if (!res.ok) { document.getElementById('jobResult').textContent = job.error || 'Unable to submit the job request. Please try again.'; return; }
+      document.getElementById('jobResult').textContent = 'Request received. Our agency will contact you to confirm requirements and discuss suitable candidates and terms.';
+      e.target.reset();
     }
 
     async function createMatch(jobId, talentId) {
-      if (!confirm('Create match & invoice?')) return;
-      await fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobId,talentId,hours:40})});
+      if (!token) { promptAdmin('dashboard'); return; }
+      if (!confirm('Create match and invoice?')) return;
+      const res = await fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify({jobId,talentId,hours:40})});
+      const data = await res.json();
+      if (res.status===401) { expireAdminSession('dashboard'); return; }
+      if (!res.ok) { alert(data.error || 'Could not create match. Check database configuration.'); return; }
       loadJobs(); alert('Match created.');
     }
 
     async function markPaid(id) {
-      await fetch('/api/matches/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchId:id})});
+      if (!token) { promptAdmin('dashboard'); return; }
+      const res = await fetch('/api/matches/pay',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify({matchId:id})});
+      const data = await res.json();
+      if (res.status===401) { expireAdminSession('dashboard'); return; }
+      if (!res.ok) { alert(data.error || 'Could not update payment status. Only confirm after verifying payment settlement.'); return; }
       loadDashboard();
     }
 
     async function loadDashboard() {
-      const [stats, matches, invoices] = await Promise.all([
-        fetch('/api/stats').then(r=>r.json()),
-        fetch('/api/matches').then(r=>r.json()),
-        fetch('/api/invoices').then(r=>r.json())
+      const responses = await Promise.all([
+        fetch('/api/stats',{headers:adminHeaders()}),
+        fetch('/api/matches',{headers:adminHeaders()}),
+        fetch('/api/invoices',{headers:adminHeaders()})
       ]);
+      if (responses.some(r => r.status === 401)) { expireAdminSession('dashboard'); return; }
+      if (responses.some(r => !r.ok)) { alert('Dashboard data is unavailable. Check the admin configuration and database connection.'); return; }
+      const [stats, matches, invoices] = await Promise.all(responses.map(r => r.json()));
       document.getElementById('stats').innerHTML = `
         <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Talent</div><div class="text-3xl font-bold mt-1">${stats.talentCount}</div></div>
         <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Open Jobs</div><div class="text-3xl font-bold mt-1">${stats.openJobs}</div></div>
@@ -321,12 +398,12 @@
         <p class="text-sm text-slate-500 mt-2">Total 22% commission tracked</p>
       `;
       document.getElementById('invoiceList').innerHTML = invoices.map(i=>`
-        <div class="px-6 py-4 flex justify-between text-sm"><span>Invoice #${i.id}</span><span class="font-medium ${i.status==='paid'?'text-emerald-600':'text-amber-600'}">$${i.amount} · ${i.status}</span></div>
+        <div class="px-6 py-4 flex justify-between text-sm"><span>Invoice #${escapeHtml(i.id)}</span><span class="font-medium ${i.status==='paid'?'text-emerald-600':'text-amber-600'}">${escapeHtml(i.amount)} · ${escapeHtml(i.status)}</span></div>
       `).join('')||'<div class="px-6 py-10 text-center text-sm text-slate-500">No invoices</div>';
       document.getElementById('matchesList').innerHTML = matches.map(m=>`
         <div class="px-6 py-4 flex justify-between items-center">
-          <div><div class="font-medium text-sm">Job #${m.jobId} ↔ Talent #${m.talentId}</div><div class="text-xs text-slate-500">$${m.clientRate}/hr → $${m.talentRate}/hr</div></div>
-          <div class="text-right"><div class="font-semibold text-emerald-600">$${(m.clientRate*m.hours*m.commissionRate).toFixed(0)}</div>${m.paid?'<span class="text-xs text-emerald-700">Paid</span>':`<button onclick="markPaid(${m.id})" class="text-xs bg-brand-600 text-white px-3 py-1 rounded-lg mt-1">Mark Paid</button>`}</div>
+          <div><div class="font-medium text-sm">Job #${escapeHtml(m.jobId)} ↔ Talent #${escapeHtml(m.talentId)}</div><div class="text-xs text-slate-500">${escapeHtml(m.clientRate)}/hr → ${escapeHtml(m.talentRate)}/hr</div></div>
+          <div class="text-right"><div class="font-semibold text-emerald-600">${(Number(m.clientRate)*Number(m.hours)*Number(m.commissionRate)).toFixed(0)}</div>${m.paid?'<span class="text-xs text-emerald-700">Paid</span>':`<button onclick="markPaid(${m.id})" class="text-xs bg-brand-600 text-white px-3 py-1 rounded-lg mt-1">Mark Paid</button>`}</div>
         </div>
       `).join('')||'<div class="px-6 py-10 text-center text-sm text-slate-500">No matches</div>';
     }
