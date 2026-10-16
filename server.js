@@ -12,6 +12,8 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const MANPOWER_ALERT_EMAIL = process.env.MANPOWER_ALERT_EMAIL || '';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM = process.env.RESEND_FROM || '';
+const GOOGLE_APPS_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL || '';
+const GOOGLE_APPS_SCRIPT_SECRET = process.env.GOOGLE_APPS_SCRIPT_SECRET || '';
 
 function escapeEmailHtml(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -19,8 +21,10 @@ function escapeEmailHtml(value) {
 }
 
 async function notifyManpowerRequest(lead) {
-  if (!MANPOWER_ALERT_EMAIL || !RESEND_API_KEY || !RESEND_FROM) {
-    console.warn('Manpower alert email skipped: configure MANPOWER_ALERT_EMAIL, RESEND_API_KEY and RESEND_FROM.');
+  const gmailRelayConfigured = Boolean(GOOGLE_APPS_SCRIPT_URL && GOOGLE_APPS_SCRIPT_SECRET);
+  const resendConfigured = Boolean(RESEND_API_KEY && RESEND_FROM);
+  if (!MANPOWER_ALERT_EMAIL || (!gmailRelayConfigured && !resendConfigured)) {
+    console.warn('Manpower alert email skipped: configure MANPOWER_ALERT_EMAIL and a supported sender.');
     return false;
   }
 
@@ -53,6 +57,23 @@ async function notifyManpowerRequest(lead) {
      ).join('') + '</table><h3>Description</h3><p>' + escapeEmailHtml(lead.description).replace(/\n/g, '<br>') +
      '</p><p>Sign in to the TalentBridge admin dashboard to review the full lead.</p>';
 
+  if (gmailRelayConfigured) {
+    try {
+      const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: GOOGLE_APPS_SCRIPT_SECRET, to: MANPOWER_ALERT_EMAIL, subject, text, html }),
+        signal: AbortSignal.timeout(15000)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result && result.ok === true) return true;
+      console.error('Manpower Gmail relay rejected the request; status:', response.status);
+    } catch (error) {
+      console.error('Manpower Gmail relay request failed:', error?.name || 'UnknownError');
+    }
+  }
+
+  if (!resendConfigured) return false;
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
