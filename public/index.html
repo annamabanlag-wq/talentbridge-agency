@@ -107,7 +107,7 @@
         <div class="animate-fade-up" style="animation-delay: 0.1s">
           <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur text-white text-xs font-medium px-4 py-1.5 rounded-full mb-6">
             <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-            Live Agency Platform
+            Manpower & Talent Sourcing
           </div>
           <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">TalentBridge</h1>
           <p class="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-light">Source top professionals. Match them to clients. Track every commission.</p>
@@ -125,7 +125,7 @@
         <div class="text-center animate-fade-up" style="animation-delay: 0.2s">
           <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-users"></i></div>
           <h3 class="font-semibold mb-1">Talent Pool</h3>
-          <p class="text-sm text-slate-500">Vetted professionals ready to work</p>
+          <p class="text-sm text-slate-500">Worker profiles managed by our agency</p>
         </div>
         <div class="text-center animate-fade-up" style="animation-delay: 0.3s">
           <div class="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-600 text-xl"><i class="fas fa-link"></i></div>
@@ -146,7 +146,7 @@
     <div class="flex items-center justify-between mb-10">
       <div>
         <h2 class="text-3xl font-bold tracking-tight">Talent Pool</h2>
-        <p class="text-slate-500 mt-1">Professionals ready for matching</p>
+        <p class="text-slate-500 mt-1">Profiles added by the agency after review and consent</p>
       </div>
       <button id="addTalentToggle" onclick="document.getElementById('addTalent').classList.toggle('hidden')" class="hidden bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-xl text-sm font-medium transition shadow-md">+ Add Talent</button>
     </div>
@@ -172,16 +172,24 @@
 
   <!-- Post -->
   <div id="post" class="section hidden max-w-2xl mx-auto px-6 py-12">
-    <h2 class="text-3xl font-bold tracking-tight mb-2">Post a Job</h2>
-    <p class="text-slate-500 mb-8">We'll match talent automatically</p>
+    <h2 class="text-3xl font-bold tracking-tight mb-2">Request Manpower</h2>
+    <p class="text-slate-500 mb-8">Tell us your staffing needs. Our agency will follow up to discuss suitable candidates and terms.</p>
     <form onsubmit="postJob(event)" class="bg-white border border-slate-200 rounded-3xl p-8 space-y-4 shadow-sm">
-      <input name="title" placeholder="Job title" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="skills" placeholder="Required skills" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="companyName" placeholder="Company name" required maxlength="180" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="contactName" placeholder="Contact person" required maxlength="120" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       <div class="grid grid-cols-2 gap-4">
-        <input name="budget" placeholder="Budget" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <input name="clientEmail" type="email" placeholder="Client email" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="clientEmail" type="email" placeholder="Business email" required maxlength="254" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="contactPhone" type="tel" placeholder="Contact phone" required maxlength="24" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
-      <textarea name="description" placeholder="Description" required rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+      <div class="grid grid-cols-2 gap-4">
+        <input name="title" placeholder="Role / job title" required maxlength="150" class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <input name="workersNeeded" type="number" min="1" max="5000" placeholder="Workers needed" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <input name="location" placeholder="Work location (city / area)" required maxlength="180" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="skills" placeholder="Required skills (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input name="budget" placeholder="Budget / target rate (optional)" maxlength="100" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <textarea name="description" placeholder="Responsibilities, shift, contract period, start date and other requirements" required maxlength="3000" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+      <p class="text-xs text-slate-500">Your contact details are visible only to authorized agency staff and are not included in public job listings.</p>
       <button class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-xl font-medium transition">Submit Job</button>
     </form>
     <div id="jobResult" class="mt-4"></div>
@@ -270,7 +278,7 @@
 
     function show(id) {
       if (!document.getElementById(id)) return;
-      if (id === 'dashboard' && !token) {
+      if ((id === 'dashboard' || id === 'jobs') && !token) {
         promptAdmin('dashboard');
         return;
       }
@@ -320,15 +328,18 @@
     }
 
     async function loadJobs() {
-      const jobResponse = await fetch('/api/jobs');
-      if (!jobResponse.ok) { document.getElementById('jobsList').textContent = 'Job requests are temporarily unavailable.'; return; }
-      const jobs = await jobResponse.json();
+      const jobResponse = await fetch('/api/jobs', {headers: adminHeaders()});
+      if (jobResponse.status === 401) { expireAdminSession('jobs'); return; }
+      if (!jobResponse.ok) { document.getElementById('jobsList').textContent = 'Job requests are temporarily unavailable. Check the database connection.'; return; }
+      const jobs = (await jobResponse.json()).map(j => ({...j, title: escapeHtml(j.title), description: escapeHtml(j.description), skills: (j.skills||[]).map(escapeHtml), status: String(j.status||'open'), companyName: escapeHtml(j.companyName), contactName: escapeHtml(j.contactName), contactPhone: escapeHtml(j.contactPhone), clientEmail: escapeHtml(j.clientEmail), location: escapeHtml(j.location), workersNeeded: Number(j.workersNeeded)||0, suggestedMatches: j.suggestedMatches||[]}));
       document.getElementById('jobsList').innerHTML = jobs.map(j=>`
         <div class="bg-white border border-slate-200 rounded-3xl p-6">
           <div class="flex justify-between items-start">
             <div>
               <h3 class="font-semibold text-lg">${escapeHtml(j.title)}</h3>
               <p class="text-sm text-slate-500 mt-0.5">${(j.skills||[]).map(escapeHtml).join(', ')}</p>
+              <p class="text-sm text-slate-700 mt-2"><strong>${escapeHtml(j.companyName)}</strong> · ${escapeHtml(j.location)} · ${Number(j.workersNeeded)||0} worker(s)</p>
+              <p class="text-xs text-slate-500 mt-1">Contact: ${escapeHtml(j.contactName)} · ${escapeHtml(j.clientEmail)} · ${escapeHtml(j.contactPhone)}</p>
             </div>
             <span class="text-xs font-medium px-3 py-1 rounded-full ${j.status==='matched'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700'}">${escapeHtml(j.status)}</span>
           </div>
