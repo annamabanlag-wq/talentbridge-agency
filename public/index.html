@@ -218,24 +218,67 @@
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80'
     ];
 
-    let token = localStorage.getItem('tb_token');
-    if (token) document.getElementById('loginOverlay').classList.add('hidden');
-    const adminHeaders = () => token ? { 'Authorization': `Bearer ${token}` } : {};
+    let token = sessionStorage.getItem('tb_token');
+    let pendingSection = null;
+    const adminHeaders = () => token ? { 'Authorization': 'Bearer ' + token } : {};
+    const escapeHtml = value => String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    function updateAdminControls() {
+      document.getElementById('addTalentToggle').classList.toggle('hidden', !token);
+    }
+    updateAdminControls();
+
+    function promptAdmin(section) {
+      pendingSection = section || 'dashboard';
+      document.getElementById('loginOverlay').classList.remove('hidden');
+    }
+
+    function expireAdminSession(section) {
+      token = null;
+      sessionStorage.removeItem('tb_token');
+      updateAdminControls();
+      promptAdmin(section || 'dashboard');
+    }
 
     async function doLogin(e) {
       e.preventDefault();
-      const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:document.getElementById('pass').value}) });
-      const data = await res.json();
-      if (data.token) { token = data.token; localStorage.setItem('tb_token', data.token); document.getElementById('loginOverlay').classList.add('hidden'); }
-      else alert('Wrong password');
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({password: document.getElementById('pass').value})
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.token) {
+          alert(data.error || 'Sign-in failed. Check the admin configuration.');
+          return;
+        }
+        token = data.token;
+        sessionStorage.setItem('tb_token', data.token);
+        document.getElementById('pass').value = '';
+        document.getElementById('loginOverlay').classList.add('hidden');
+        updateAdminControls();
+        const target = pendingSection || 'home';
+        pendingSection = null;
+        show(target);
+      } catch {
+        alert('Could not contact the agency server. Please try again.');
+      }
     }
 
     function show(id) {
+      if (!document.getElementById(id)) return;
+      if (id === 'dashboard' && !token) {
+        promptAdmin('dashboard');
+        return;
+      }
       document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
-      if (id==='talent') loadTalent();
-      if (id==='jobs') loadJobs();
-      if (id==='dashboard') loadDashboard();
+      if (id === 'talent') loadTalent();
+      if (id === 'jobs') loadJobs();
+      if (id === 'dashboard') loadDashboard();
     }
 
     async function loadTalent() {
