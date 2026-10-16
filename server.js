@@ -143,6 +143,7 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/talents' && req.method === 'POST') {
       if (!requireAdmin(req, res)) return;
+      if (!dbReady) return sendJSON(res, 503, { error: 'Persistent database unavailable; talent was not saved' });
       const body = await parseBody(req);
       const skills = (body.skills || '').split(',').map(s=>s.trim()).filter(Boolean).join(',');
       if (dbReady) {
@@ -164,6 +165,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/jobs' && req.method === 'POST') {
+      if (!dbReady) return sendJSON(res, 503, { error: 'Persistent database unavailable; job request was not saved' });
       const body = await parseBody(req);
       const skills = (body.skills || '').split(',').map(s=>s.trim()).filter(Boolean).join(',');
       if (dbReady) {
@@ -180,6 +182,7 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/matches' && req.method === 'POST') {
       if (!requireAdmin(req, res)) return;
+      if (!dbReady) return sendJSON(res, 503, { error: 'Persistent database unavailable; match was not created' });
       const body = await parseBody(req);
       const talents = await getTalents();
       const talent = talents.find(t => t.id === Number(body.talentId));
