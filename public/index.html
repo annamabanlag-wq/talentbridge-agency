@@ -282,11 +282,13 @@
     }
 
     async function loadTalent() {
-      const talents = await (await fetch('/api/talents')).json();
+      const talentResponse = await fetch('/api/talents');
+      if (!talentResponse.ok) { document.getElementById('talentList').textContent = 'Talent profiles are temporarily unavailable.'; return; }
+      const talents = await talentResponse.json();
       document.getElementById('talentList').innerHTML = talents.map((t,i)=>`
         <div class="talent-card bg-white border border-slate-200 rounded-3xl overflow-hidden">
           <div class="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
-            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${t.name}">
+            <img src="${avatars[i % avatars.length]}" class="w-full h-full object-cover" alt="${escapeHtml(t.name)}">
             <div class="absolute top-3 right-3">
               <span class="text-xs font-medium px-2.5 py-1 rounded-full ${t.available?'bg-emerald-500 text-white':'bg-slate-500 text-white'}">${t.available?'Available':'Engaged'}</span>
             </div>
@@ -294,47 +296,54 @@
           <div class="p-5">
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="font-semibold text-lg">${t.name}</h3>
-                <p class="text-brand-600 text-sm">${t.title}</p>
+                <h3 class="font-semibold text-lg">${escapeHtml(t.name)}</h3>
+                <p class="text-brand-600 text-sm">${escapeHtml(t.title)}</p>
               </div>
-              <div class="font-bold text-slate-900">$${t.rate}<span class="text-xs font-normal text-slate-500">/hr</span></div>
+              <div class="font-bold text-slate-900"> ${Number(t.rate)||0}<span class="text-xs font-normal text-slate-500">/hr</span></div>
             </div>
-            <div class="flex flex-wrap gap-1.5 mt-3">${t.skills.map(s=>`<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg">${s}</span>`).join('')}</div>
-            ${t.bio?`<p class="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-2">${t.bio}</p>`:''}
+            <div class="flex flex-wrap gap-1.5 mt-3">${t.skills.map(s=>`<span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-lg">${escapeHtml(s)}</span>`).join('')}</div>
+            ${t.bio?`<p class="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-2">${escapeHtml(t.bio)}</p>`:''}
           </div>
         </div>
       `).join('') || '<p class="text-slate-500 col-span-full text-center py-16">No talent yet.</p>';
     }
 
     async function addTalent(e) {
-      e.preventDefault(); const fd=new FormData(e.target);
-      await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify(Object.fromEntries(fd))});
-      if (res.status === 401) { localStorage.removeItem('tb_token'); token=null; document.getElementById('loginOverlay').classList.remove('hidden'); alert('Please sign in again.'); return; }
-      if (!res.ok) { alert('Could not save talent. Check admin login and database configuration.'); return; }
+      e.preventDefault();
+      if (!token) { promptAdmin('talent'); return; }
+      const fd=new FormData(e.target);
+      const res = await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify(Object.fromEntries(fd))});
+      const data = await res.json();
+      if (res.status === 401) { expireAdminSession('talent'); return; }
+      if (!res.ok) { alert(data.error || 'Could not save talent. Check admin configuration and database.'); return; }
       e.target.reset(); e.target.classList.add('hidden'); loadTalent();
     }
 
     async function loadJobs() {
-      const jobs = await (await fetch('/api/jobs')).json();
+      const jobResponse = await fetch('/api/jobs');
+      if (!jobResponse.ok) { document.getElementById('jobsList').textContent = 'Job requests are temporarily unavailable.'; return; }
+      const jobs = await jobResponse.json();
       document.getElementById('jobsList').innerHTML = jobs.map(j=>`
         <div class="bg-white border border-slate-200 rounded-3xl p-6">
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="font-semibold text-lg">${j.title}</h3>
-              <p class="text-sm text-slate-500 mt-0.5">${(j.skills||[]).join(', ')}</p>
+              <h3 class="font-semibold text-lg">${escapeHtml(j.title)}</h3>
+              <p class="text-sm text-slate-500 mt-0.5">${(j.skills||[]).map(escapeHtml).join(', ')}</p>
             </div>
-            <span class="text-xs font-medium px-3 py-1 rounded-full ${j.status==='matched'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700'}">${j.status}</span>
+            <span class="text-xs font-medium px-3 py-1 rounded-full ${j.status==='matched'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700'}">${escapeHtml(j.status)}</span>
           </div>
-          <p class="text-sm text-slate-600 mt-3">${j.description}</p>
-          ${j.suggestedMatches?.length?`<div class="mt-4 flex flex-wrap gap-2">${j.suggestedMatches.map(m=>`<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-xl font-medium transition">${m.name} · $${m.rate}/hr</button>`).join('')}</div>`:''}
+          <p class="text-sm text-slate-600 mt-3">${escapeHtml(j.description)}</p>
+          ${token && j.suggestedMatches?.length?`<div class="mt-4 flex flex-wrap gap-2">${j.suggestedMatches.map(m=>`<button onclick="createMatch(${j.id},${m.id})" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-xl font-medium transition">${escapeHtml(m.name)} · ${Number(m.rate)||0}/hr</button>`).join('')}</div>`:''}
         </div>
       `).join('')||'<p class="text-slate-500 text-center py-16">No jobs yet.</p>';
     }
 
     async function postJob(e) {
       e.preventDefault(); const fd=new FormData(e.target);
-      const job = await (await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))})).json();
-      document.getElementById('jobResult').innerHTML=`<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl">Posted. ${job.suggestedMatches?.length||0} matches suggested.</div>`;
+      const res = await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))});
+      const job = await res.json();
+      if (!res.ok) { document.getElementById('jobResult').textContent = job.error || 'Unable to submit the job request. Please try again.'; return; }
+      document.getElementById('jobResult').textContent = 'Job request received. ' + (Number(job.suggestedMatches?.length)||0) + ' suggested matches.';
       e.target.reset(); setTimeout(()=>show('jobs'),1200);
     }
 
