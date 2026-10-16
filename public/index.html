@@ -220,6 +220,7 @@
 
     let token = localStorage.getItem('tb_token');
     if (token) document.getElementById('loginOverlay').classList.add('hidden');
+    const adminHeaders = () => token ? { 'Authorization': `Bearer ${token}` } : {};
 
     async function doLogin(e) {
       e.preventDefault();
@@ -264,7 +265,9 @@
 
     async function addTalent(e) {
       e.preventDefault(); const fd=new FormData(e.target);
-      await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))});
+      await fetch('/api/talents',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify(Object.fromEntries(fd))});
+      if (res.status === 401) { localStorage.removeItem('tb_token'); token=null; document.getElementById('loginOverlay').classList.remove('hidden'); alert('Please sign in again.'); return; }
+      if (!res.ok) { alert('Could not save talent. Check admin login and database configuration.'); return; }
       e.target.reset(); e.target.classList.add('hidden'); loadTalent();
     }
 
@@ -294,20 +297,22 @@
 
     async function createMatch(jobId, talentId) {
       if (!confirm('Create match & invoice?')) return;
-      await fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobId,talentId,hours:40})});
+      const res = await fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify({jobId,talentId,hours:40})});
+      if (!res.ok) { if (res.status===401) { localStorage.removeItem('tb_token'); token=null; document.getElementById('loginOverlay').classList.remove('hidden'); } alert('Could not create match. Please sign in and check database status.'); return; }
       loadJobs(); alert('Match created.');
     }
 
     async function markPaid(id) {
-      await fetch('/api/matches/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchId:id})});
+      const res = await fetch('/api/matches/pay',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify({matchId:id})});
+      if (!res.ok) { if (res.status===401) { localStorage.removeItem('tb_token'); token=null; document.getElementById('loginOverlay').classList.remove('hidden'); } alert('Could not update payment status.'); return; }
       loadDashboard();
     }
 
     async function loadDashboard() {
       const [stats, matches, invoices] = await Promise.all([
-        fetch('/api/stats').then(r=>r.json()),
-        fetch('/api/matches').then(r=>r.json()),
-        fetch('/api/invoices').then(r=>r.json())
+        fetch('/api/stats',{headers:adminHeaders()}).then(r=>r.json()),
+        fetch('/api/matches',{headers:adminHeaders()}).then(r=>r.json()),
+        fetch('/api/invoices',{headers:adminHeaders()}).then(r=>r.json())
       ]);
       document.getElementById('stats').innerHTML = `
         <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Talent</div><div class="text-3xl font-bold mt-1">${stats.talentCount}</div></div>
