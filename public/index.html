@@ -348,24 +348,33 @@
     }
 
     async function createMatch(jobId, talentId) {
-      if (!confirm('Create match & invoice?')) return;
+      if (!token) { promptAdmin('dashboard'); return; }
+      if (!confirm('Create match and invoice?')) return;
       const res = await fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify({jobId,talentId,hours:40})});
-      if (!res.ok) { if (res.status===401) { localStorage.removeItem('tb_token'); token=null; document.getElementById('loginOverlay').classList.remove('hidden'); } alert('Could not create match. Please sign in and check database status.'); return; }
+      const data = await res.json();
+      if (res.status===401) { expireAdminSession('dashboard'); return; }
+      if (!res.ok) { alert(data.error || 'Could not create match. Check database configuration.'); return; }
       loadJobs(); alert('Match created.');
     }
 
     async function markPaid(id) {
+      if (!token) { promptAdmin('dashboard'); return; }
       const res = await fetch('/api/matches/pay',{method:'POST',headers:{'Content-Type':'application/json', ...adminHeaders()},body:JSON.stringify({matchId:id})});
-      if (!res.ok) { if (res.status===401) { localStorage.removeItem('tb_token'); token=null; document.getElementById('loginOverlay').classList.remove('hidden'); } alert('Could not update payment status.'); return; }
+      const data = await res.json();
+      if (res.status===401) { expireAdminSession('dashboard'); return; }
+      if (!res.ok) { alert(data.error || 'Could not update payment status. Only confirm after verifying payment settlement.'); return; }
       loadDashboard();
     }
 
     async function loadDashboard() {
-      const [stats, matches, invoices] = await Promise.all([
-        fetch('/api/stats',{headers:adminHeaders()}).then(r=>r.json()),
-        fetch('/api/matches',{headers:adminHeaders()}).then(r=>r.json()),
-        fetch('/api/invoices',{headers:adminHeaders()}).then(r=>r.json())
+      const responses = await Promise.all([
+        fetch('/api/stats',{headers:adminHeaders()}),
+        fetch('/api/matches',{headers:adminHeaders()}),
+        fetch('/api/invoices',{headers:adminHeaders()})
       ]);
+      if (responses.some(r => r.status === 401)) { expireAdminSession('dashboard'); return; }
+      if (responses.some(r => !r.ok)) { alert('Dashboard data is unavailable. Check the admin configuration and database connection.'); return; }
+      const [stats, matches, invoices] = await Promise.all(responses.map(r => r.json()));
       document.getElementById('stats').innerHTML = `
         <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Talent</div><div class="text-3xl font-bold mt-1">${stats.talentCount}</div></div>
         <div class="bg-white border border-slate-200 rounded-2xl p-5"><div class="text-xs text-slate-500">Open Jobs</div><div class="text-3xl font-bold mt-1">${stats.openJobs}</div></div>
@@ -378,12 +387,12 @@
         <p class="text-sm text-slate-500 mt-2">Total 22% commission tracked</p>
       `;
       document.getElementById('invoiceList').innerHTML = invoices.map(i=>`
-        <div class="px-6 py-4 flex justify-between text-sm"><span>Invoice #${i.id}</span><span class="font-medium ${i.status==='paid'?'text-emerald-600':'text-amber-600'}">$${i.amount} · ${i.status}</span></div>
+        <div class="px-6 py-4 flex justify-between text-sm"><span>Invoice #${escapeHtml(i.id)}</span><span class="font-medium ${i.status==='paid'?'text-emerald-600':'text-amber-600'}">${escapeHtml(i.amount)} · ${escapeHtml(i.status)}</span></div>
       `).join('')||'<div class="px-6 py-10 text-center text-sm text-slate-500">No invoices</div>';
       document.getElementById('matchesList').innerHTML = matches.map(m=>`
         <div class="px-6 py-4 flex justify-between items-center">
-          <div><div class="font-medium text-sm">Job #${m.jobId} ↔ Talent #${m.talentId}</div><div class="text-xs text-slate-500">$${m.clientRate}/hr → $${m.talentRate}/hr</div></div>
-          <div class="text-right"><div class="font-semibold text-emerald-600">$${(m.clientRate*m.hours*m.commissionRate).toFixed(0)}</div>${m.paid?'<span class="text-xs text-emerald-700">Paid</span>':`<button onclick="markPaid(${m.id})" class="text-xs bg-brand-600 text-white px-3 py-1 rounded-lg mt-1">Mark Paid</button>`}</div>
+          <div><div class="font-medium text-sm">Job #${escapeHtml(m.jobId)} ↔ Talent #${escapeHtml(m.talentId)}</div><div class="text-xs text-slate-500">${escapeHtml(m.clientRate)}/hr → ${escapeHtml(m.talentRate)}/hr</div></div>
+          <div class="text-right"><div class="font-semibold text-emerald-600">${(Number(m.clientRate)*Number(m.hours)*Number(m.commissionRate)).toFixed(0)}</div>${m.paid?'<span class="text-xs text-emerald-700">Paid</span>':`<button onclick="markPaid(${m.id})" class="text-xs bg-brand-600 text-white px-3 py-1 rounded-lg mt-1">Mark Paid</button>`}</div>
         </div>
       `).join('')||'<div class="px-6 py-10 text-center text-sm text-slate-500">No matches</div>';
     }
