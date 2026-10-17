@@ -198,7 +198,32 @@
         <input name="workersNeeded" type="number" min="1" max="5000" placeholder="Workers needed" required class="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
       <input name="location" placeholder="Work location (city / area)" required maxlength="180" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-      <input name="skills" placeholder="Required skills (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input id="jobSkills" name="skills" placeholder="Required skills (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <select aria-label="Add a required skill group" onchange="addSkillSuggestions('jobSkills', this)" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <option value="">Quick-add a role / skill group (optional)</option>
+        <option value="housekeeping">Housekeeping, cleaning & room attendant</option>
+        <option value="hospitality">Hotel, restaurant & food service</option>
+        <option value="kitchen">Chef, cook & kitchen support</option>
+        <option value="warehouse">Warehouse, inventory & logistics</option>
+        <option value="driver">Drivers, delivery & messengers</option>
+        <option value="trades">Construction & skilled trades</option>
+        <option value="maintenance">Facilities & maintenance</option>
+        <option value="office">Office, admin & data entry</option>
+        <option value="customer">Customer service & BPO</option>
+        <option value="sales">Retail, sales & merchandising</option>
+        <option value="production">Manufacturing & production</option>
+        <option value="security">Security (verify required licenses)</option>
+        <option value="care">Caregiving & healthcare support</option>
+        <option value="beauty">Beauty, wellness & personal services</option>
+        <option value="it">IT, software & technical support</option>
+        <option value="digital">Digital marketing, design & creative</option>
+        <option value="remote">Virtual assistance & remote operations</option>
+        <option value="finance">Accounting, bookkeeping & finance</option>
+        <option value="education">Education, tutoring & training</option>
+        <option value="marine">Marine, seafaring & offshore</option>
+        <option value="home">Household & home services</option>
+        <option value="agri">Agriculture, landscaping & groundskeeping</option>
+      </select>
       <input name="budget" placeholder="Budget / target rate (optional)" maxlength="100" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       <textarea name="description" placeholder="Responsibilities, shift, contract period, start date and other requirements" required maxlength="3000" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
       <p class="text-xs text-slate-500">Your contact details are visible only to authorized agency staff and are not included in public job listings.</p>
@@ -223,7 +248,35 @@
         <input name="title" placeholder="Main skill or job title" required maxlength="150" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
         <input name="experience" placeholder="Experience (e.g. 3 years)" maxlength="100" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
-      <input name="skills" placeholder="Skills / certifications (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <input id="candidateSkills" name="skills" placeholder="Skills / certifications (comma-separated)" required maxlength="500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <div class="grid md:grid-cols-[1fr_auto] gap-3">
+        <select aria-label="Add a skill group" onchange="addSkillSuggestions('candidateSkills', this)" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">Add skills by category (optional)</option>
+          <option value="housekeeping">Housekeeping, cleaning & room attendant</option>
+          <option value="hospitality">Hotel, restaurant & food service</option>
+          <option value="kitchen">Chef, cook & kitchen support</option>
+          <option value="warehouse">Warehouse, inventory & logistics</option>
+          <option value="driver">Drivers, delivery & messengers</option>
+          <option value="trades">Construction & skilled trades</option>
+          <option value="maintenance">Facilities & maintenance</option>
+          <option value="office">Office, admin & data entry</option>
+          <option value="customer">Customer service & BPO</option>
+          <option value="sales">Retail, sales & merchandising</option>
+          <option value="production">Manufacturing & production</option>
+          <option value="security">Security (required licenses must be verified)</option>
+          <option value="care">Caregiving & healthcare support</option>
+          <option value="beauty">Beauty, wellness & personal services</option>
+          <option value="it">IT, software & technical support</option>
+          <option value="digital">Digital marketing, design & creative</option>
+          <option value="remote">Virtual assistance & remote operations</option>
+          <option value="finance">Accounting, bookkeeping & finance</option>
+          <option value="education">Education, tutoring & training</option>
+          <option value="marine">Marine, seafaring & offshore</option>
+          <option value="home">Household & home services</option>
+          <option value="agri">Agriculture, landscaping & groundskeeping</option>
+        </select>
+        <span class="text-xs text-slate-500 self-center">Choose one or more groups to add examples, then edit to match your real skills.</span>
+      </div>
       <div class="grid md:grid-cols-2 gap-4">
         <select name="workType" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
           <option value="">Preferred work arrangement</option>
@@ -289,6 +342,45 @@
     const escapeHtml = value => String(value ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    const SKILL_SUGGESTIONS = {
+      housekeeping: ['Housekeeping', 'Room Attendant', 'Deep Cleaning'],
+      hospitality: ['Hotel Operations', 'Food Service', 'Guest Service'],
+      kitchen: ['Cooking', 'Food Preparation', 'Kitchen Sanitation'],
+      warehouse: ['Warehouse Operations', 'Inventory', 'Packing and Dispatch'],
+      driver: ['Driving', 'Delivery', 'Route Planning'],
+      trades: ['Construction', 'Hand Tools', 'Trade Safety'],
+      maintenance: ['Facilities Maintenance', 'Basic Repairs', 'Preventive Maintenance'],
+      office: ['Administrative Support', 'Data Entry', 'Document Management'],
+      customer: ['Customer Service', 'Phone Support', 'Email and Chat Support'],
+      sales: ['Retail Sales', 'Merchandising', 'Point of Sale'],
+      production: ['Production Operations', 'Quality Checking', 'Packaging'],
+      security: ['Security Services', 'Access Control', 'Incident Reporting'],
+      care: ['Caregiving', 'Patient Support', 'First Aid (if certified)'],
+      beauty: ['Personal Services', 'Client Care', 'Sanitation'],
+      it: ['Technical Support', 'Troubleshooting', 'Computer Skills'],
+      digital: ['Digital Marketing', 'Graphic Design', 'Content Creation'],
+      remote: ['Virtual Assistance', 'Calendar Management', 'Online Research'],
+      finance: ['Bookkeeping', 'Spreadsheet Skills', 'Accounts Support'],
+      education: ['Tutoring', 'Lesson Preparation', 'Training Facilitation'],
+      marine: ['Marine Operations', 'Seafarer Skills', 'Safety Training'],
+      home: ['Household Cleaning', 'Laundry', 'Home Organization'],
+      agri: ['Landscaping', 'Groundskeeping', 'Plant Care']
+    };
+
+    function addSkillSuggestions(fieldId, selector) {
+      const field = document.getElementById(fieldId);
+      const suggestions = SKILL_SUGGESTIONS[selector.value] || [];
+      const current = field.value.split(',').map(s => s.trim()).filter(Boolean);
+      const merged = [...new Set([...current, ...suggestions])];
+      const result = merged.join(', ');
+      if (result.length > 500) {
+        alert('The skills field is full. Remove some items before adding another group.');
+      } else {
+        field.value = result;
+      }
+      selector.value = '';
+    }
 
     function updateAdminControls() {
       document.getElementById('addTalentToggle').classList.toggle('hidden', !token);
